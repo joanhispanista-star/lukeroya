@@ -1,0 +1,23 @@
+.niv-hero { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:20px; margin-bottom:12px; text-align:center; }
+.niv-badge { display:inline-block; background:var(--gold); color:#000; font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:2px; padding:4px 18px; border-radius:20px; margin-bottom:5px; }
+.niv-nom { font-family:'Syne',sans-serif; font-size:20px; font-weight:800; margin-bottom:4px; }
+.niv-pts { font-size:13px; color:var(--text2); margin-bottom:12px; }
+.niv-bar-wrap { background:var(--bg3); border-radius:6px; height:8px; overflow:hidden; margin-bottom:6px; }
+.niv-bar { height:100%; background:linear-gradient(90deg,var(--gold),var(--orange)); border-radius:6px; transition:width .4s; }
+.niv-bar-lbl { display:flex; justify-content:space-between; font-size:11px; color:var(--text2); }
+.fasttip { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px; margin-bottom:12px; }
+.ftt { font-family:'Syne',sans-serif; font-size:13px; font-weight:700; margin-bottom:10px; }
+.fti { display:flex; gap:8px; font-size:12px; color:var(--text2); margin-bottom:7px; }
+.seh { margin:11px 0 8px; }
+.seh h2 { font-family:'Syne',sans-serif; font-size:15px; font-weight:700; }
+.seh p { font-size:11px; color:var(--text2); margin-top:2px; }
+.niv-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.niv-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:12px; }
+.niv-card.done { border-color:rgba(34,197,94,.3); }
+.niv-card.cur { border-color:var(--gold); background:rgba(245,197,24,.06); }
+.niv-card.locked { opacity:.5; }
+.niv-card-n { font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:.6px; }
+.niv-card-nom { font-family:'Syne',sans-serif; font-size:13px; font-weight:700; margin:2px 0; }
+.niv-card-cap { font-size:12px; color:var(--gold); }
+.niv-card-tasa { font-size:11px; color:var(--text2); margin-top:2px; }
+.niv-card.done .niv-card-nom::after { content:' ✓'; color:var(--green); }

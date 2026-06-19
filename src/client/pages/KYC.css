@@ -1,0 +1,18 @@
+.kprog { display:flex; gap:6px; margin-bottom:20px; }
+.kd { flex:1; height:4px; background:var(--border); border-radius:2px; transition:background .3s; }
+.kd.done { background:var(--green); }
+.kd.cur { background:var(--gold); }
+.kstep-title { font-family:'Syne',sans-serif; font-weight:700; font-size:16px; margin-bottom:4px; }
+.kstep-sub { font-size:12px; color:var(--text2); margin-bottom:10px; }
+.ubx { background:var(--bg2); border:1px dashed var(--border); border-radius:12px; padding:16px; display:flex; align-items:center; gap:12px; cursor:pointer; }
+.uico { font-size:28px; }
+.uptit { font-size:14px; font-weight:600; }
+.upsub { font-size:11px; color:var(--text2); margin-top:2px; }
+.otps { background:rgba(34,197,94,.09); border:1px solid rgba(34,197,94,.2); border-radius:7px; padding:7px 10px; font-size:12px; color:var(--green); margin-bottom:8px; text-align:center; }
+.otpr { display:flex; gap:7px; justify-content:center; margin:11px 0; }
+.otin { width:40px; height:48px; text-align:center; background:var(--bg2); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:20px; font-family:'Outfit',sans-serif; outline:none; }
+.otin:focus { border-color:var(--gold); }
+.tcscr { height:160px; overflow-y:auto; background:var(--bg2); border-radius:8px; padding:12px; font-size:12px; color:var(--text2); line-height:1.6; margin-bottom:12px; }
+.tcscr h3 { font-size:12px; color:var(--text); margin:8px 0 3px; }
+.tcck { display:flex; gap:8px; align-items:flex-start; margin-bottom:9px; font-size:12px; color:var(--text2); cursor:pointer; }
+.tcck input { margin-top:2px; accent-color:var(--gold); }

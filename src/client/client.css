@@ -1,0 +1,26 @@
+.client-shell {
+  position: relative;
+  max-width: var(--max);
+  margin: 0 auto;
+  height: 100vh;
+  overflow: hidden;
+}
+.client-scroll {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: 70px;
+}
+/* topnav shared */
+.topnav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px;
+  background: rgba(11,26,59,.96);
+  backdrop-filter: blur(14px);
+  position: sticky; top: 0; z-index: 40;
+  border-bottom: 1px solid var(--border);
+}
+.nav-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px; letter-spacing: 2px; color: var(--gold);
+}

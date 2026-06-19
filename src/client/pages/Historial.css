@@ -1,0 +1,10 @@
+.hist-card { margin-bottom:8px; }
+.hist-row { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:4px; }
+.hist-cap { font-family:'Syne',sans-serif; font-size:18px; font-weight:700; }
+.hist-fecha { font-size:11px; color:var(--text2); }
+.hist-estado { font-size:11px; font-weight:700; padding:3px 10px; border-radius:20px; text-transform:uppercase; letter-spacing:.5px; }
+.hist-estado.activo { background:rgba(59,130,246,.15); color:var(--blue); }
+.hist-estado.pagado { background:rgba(34,197,94,.15); color:var(--green); }
+.hist-estado.mora { background:rgba(239,68,68,.15); color:var(--red); }
+.hist-total { font-size:12px; color:var(--text2); }
+.est { text-align:center; padding:28px 0; color:var(--text3); }

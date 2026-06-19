@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Lukero · Nanocreditos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;600;700;800&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b1a3b;--bg2:#0f2147;--bg3:#173060;--card:#182d58;--border:#243d72;
+  --gold:#f5c518;--gold2:#ffe57a;--blue:#3b82f6;--blue2:#60a5fa;
+  --green:#22c55e;--red:#ef4444;--orange:#f97316;--purple:#a78bfa;
+  --text:#eef2ff;--text2:#8eaacc;--text3:#3d5580;--max:480px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);max-width:var(--max);margin:0 auto;position:relative;}
+/* SCREENS */
+.screen{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;display:none;padding-bottom:70px;}
+.screen.active{display:block;}
+.noscroll{padding-bottom:0!important;}
+/* BOT NAV - fixed only when app is active */
+#bottomNav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:var(--max);background:rgba(11,26,59,.98);backdrop-filter:blur(16px);border-top:1px solid var(--border);display:none;z-index:50;}
+#bottomNav.on{display:flex;}
+.bn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 4px;cursor:pointer;color:var(--text3);border-top:2px solid transparent;transition:all .2s;}
+.bn .bi{font-size:19px;}.bn .bl{font-size:10px;font-weight:500;}
+.bn.active{color:var(--gold);border-top-color:var(--gold);}
+/* MORE SHEET */
+#moreSheet{position:fixed;bottom:0;left:50%;transform:translateX(-50%) translateY(110%);width:100%;max-width:var(--max);background:var(--bg2);border-radius:20px 20px 0 0;border-top:1px solid var(--border);padding:14px 14px 26px;z-index:60;transition:transform .28s ease;}
+#moreSheet.on{transform:translateX(-50%) translateY(0);}
+#moreOv{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:59;display:none;}
+#moreOv.on{display:block;}
+.mh{width:34px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 14px;}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.mbtn{background:var(--card);border:1px solid var(--border);border-radius:11px;padding:13px 11px;cursor:pointer;color:var(--text);font-family:'Outfit',sans-serif;font-size:13px;display:flex;align-items:center;gap:8px;transition:all .2s;}
+.mbtn:active{border-color:var(--gold);color:var(--gold);}
+/* TOPNAV */
+.topnav{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:rgba(11,26,59,.96);backdrop-filter:blur(14px);position:sticky;top:0;z-index:40;border-bottom:1px solid var(--border);}
+.nav-logo{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:var(--gold);}
+/* AUTH */
+.auth-wrap{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:26px 18px;background:linear-gradient(175deg,var(--bg) 0%,var(--bg2) 100%);}
+.auth-mascot{font-size:66px;display:block;margin-bottom:5px;animation:fl 3s ease-in-out infinite;}
+@keyframes fl{0%,100%{transform:translateY(0);}50%{transform:translateY(-9px);}}
+.auth-logo{font-family:'Bebas Neue',sans-serif;font-size:48px;letter-spacing:4px;color:var(--gold);line-height:1;}
+.auth-tag{color:var(--text2);font-size:13px;margin-bottom:24px;}
+.auth-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:22px 18px;width:100%;max-width:360px;}
+.atabs{display:flex;background:var(--bg2);border-radius:9px;padding:3px;margin-bottom:18px;}
+.atab{flex:1;padding:9px;border:none;background:transparent;color:var(--text2);border-radius:7px;cursor:pointer;font-size:14px;font-family:'Outfit',sans-serif;transition:all .2s;}
+.atab.on{background:var(--gold);color:#000;font-weight:700;}
+.field{margin-bottom:13px;}
+.field label{display:block;font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;}
+.field input,.field select{width:100%;padding:12px 13px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:'Outfit',sans-serif;outline:none;transition:border .2s;-webkit-appearance:none;}
+.field input:focus,.field select:focus{border-color:var(--gold);}
+.btn{width:100%;padding:14px;background:linear-gradient(135deg,var(--gold),var(--orange));border:none;border-radius:11px;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:#000;cursor:pointer;margin-top:4px;transition:opacity .2s;}
+.btn:active{opacity:.85;}
+.btn-ghost{width:100%;padding:11px;background:transparent;border:1px solid var(--border);border-radius:11px;color:var(--text2);font-family:'Outfit',sans-serif;font-size:14px;cursor:pointer;margin-top:7px;transition:all .2s;}
+.btn-ghost:active{border-color:var(--gold);color:var(--gold);}
+.err{color:var(--red);font-size:12px;margin-top:7px;text-align:center;}
+.auth-foot{color:var(--text3);font-size:11px;text-align:center;margin-top:10px;}
+.auth-foot a{color:var(--blue2);cursor:pointer;}
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:15px;margin-bottom:11px;}
+.ctitle{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;margin-bottom:11px;display:flex;align-items:center;gap:6px;}
+.pw{padding:0 15px;}
+/* HERO */
+.hero{padding:18px 15px 12px;text-align:center;background:linear-gradient(175deg,var(--bg2) 0%,transparent 100%);}
+.mascot{font-size:58px;display:block;animation:fl 3s ease-in-out infinite;}
+.hero h1{font-family:'Bebas Neue',sans-serif;font-size:36px;letter-spacing:3px;line-height:1;color:var(--gold);}
+.hero-sub{color:var(--text2);font-size:12px;margin-top:4px;}
+.hbadges{display:flex;gap:5px;justify-content:center;margin-top:8px;flex-wrap:wrap;}
+.hb{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;}
+.hb-g{background:rgba(245,197,24,.14);color:var(--gold);border:1px solid rgba(245,197,24,.2);}
+.hb-b{background:rgba(59,130,246,.14);color:var(--blue2);border:1px solid rgba(59,130,246,.2);}
+.hb-gr{background:rgba(34,197,94,.11);color:var(--green);border:1px solid rgba(34,197,94,.18);}
+/* MISSION STRIP */
+.mstrip{background:linear-gradient(135deg,rgba(59,130,246,.14),rgba(245,197,24,.06));border:1px solid rgba(59,130,246,.2);border-radius:13px;padding:14px;margin-bottom:11px;}
+.mst{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;margin-bottom:5px;}
+.msx{font-size:12px;color:var(--text2);line-height:1.6;}
+.mpil{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:10px;}
+.mp{background:rgba(255,255,255,.04);border-radius:9px;padding:9px 6px;text-align:center;}
+.mp .mi{font-size:18px;margin-bottom:3px;}
+.mp .mt{font-size:10px;color:var(--text2);line-height:1.3;}
+/* ACTIVE CREDIT */
+.cc{background:linear-gradient(135deg,rgba(59,130,246,.17),rgba(245,197,24,.08));border:1px solid rgba(59,130,246,.28);border-radius:14px;padding:15px;margin-bottom:11px;cursor:pointer;}
+.cc-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:9px;}
+.cc-lbl{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;}
+.cc-amt{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:2px;color:var(--gold);}
+.cc-sub{font-size:11px;color:var(--text2);margin-top:1px;}
+.stbadge{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;}
+.st-activo{background:rgba(34,197,94,.18);color:var(--green);}
+.st-vencido{background:rgba(239,68,68,.18);color:var(--red);}
+.st-pagado{background:rgba(34,197,94,.18);color:var(--green);}
+.pbar{height:6px;background:rgba(255,255,255,.09);border-radius:3px;overflow:hidden;margin:7px 0;}
+.pfill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--blue),var(--gold));transition:width .5s;}
+.cc-date{font-size:11px;color:var(--text2);}
+.dwarn{color:var(--red);font-weight:600;}
+/* SIM */
+.simw{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:11px;}
+.slbl{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:7px;}
+.lvsc{display:flex;gap:5px;overflow-x:auto;padding-bottom:3px;scrollbar-width:none;}
+.lvsc::-webkit-scrollbar{display:none;}
+.lvbtn{padding:6px 11px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:11px;font-family:'Outfit',sans-serif;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .2s;}
+.lvbtn.on{background:var(--gold);color:#000;border-color:var(--gold);font-weight:700;}
+.capg{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+.capb{flex:1;min-width:62px;padding:8px;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:12px;font-family:'Outfit',sans-serif;cursor:pointer;text-align:center;transition:all .2s;}
+.capb.on{background:rgba(245,197,24,.14);color:var(--gold);border-color:var(--gold);}
+.grace{background:rgba(34,197,94,.09);border:1px solid rgba(34,197,94,.2);border-radius:7px;padding:6px 11px;font-size:12px;color:var(--green);margin-top:7px;text-align:center;}
+.prrow{display:flex;align-items:center;justify-content:space-between;background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:10px 12px;margin-top:8px;}
+.prtit{font-size:12px;font-weight:500;}
+.prsub{font-size:11px;color:var(--text2);margin-top:1px;}
+.tog{width:44px;height:24px;border-radius:12px;background:var(--border);position:relative;cursor:pointer;transition:background .2s;border:none;flex-shrink:0;}
+.tog.on{background:var(--gold);}
+.tog::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .2s;}
+.tog.on::after{left:23px;}
+.sres{background:linear-gradient(135deg,rgba(245,197,24,.07),rgba(59,130,246,.05));border:1px solid rgba(245,197,24,.17);border-radius:11px;padding:13px;margin-top:10px;}
+.stot{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:2px;color:var(--gold);}
+.stotl{font-size:11px;color:var(--text2);margin-bottom:2px;}
+.clist{margin-top:8px;display:flex;flex-direction:column;gap:5px;}
+.cr{display:flex;justify-content:space-between;font-size:12px;}
+.cr .cl{color:var(--text2);}.cr .cv{font-weight:600;}
+.dv{height:1px;background:var(--border);margin:3px 0;}
+.btna{width:100%;padding:13px;background:linear-gradient(135deg,var(--gold),var(--orange));border:none;border-radius:11px;font-family:'Bebas Neue',sans-serif;font-size:19px;letter-spacing:2px;color:#000;cursor:pointer;margin-top:11px;transition:opacity .2s;}
+.btna:active{opacity:.85;}
+/* CALENDAR */
+.caltit{font-family:'Syne',sans-serif;font-weight:700;font-size:13px;margin:12px 0 7px;display:flex;align-items:center;gap:5px;}
+.caltl{display:flex;flex-direction:column;gap:6px;}
+.calr{border-radius:9px;padding:9px 11px;display:flex;align-items:center;gap:8px;border:1px solid;}
+.cald{background:rgba(59,130,246,.08);border-color:rgba(59,130,246,.2);}
+.cal3{background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.25);}
+.cal2{background:rgba(34,197,94,.06);border-color:rgba(34,197,94,.16);}
+.cal1{background:rgba(34,197,94,.04);border-color:rgba(34,197,94,.12);}
+.calp{background:rgba(245,197,24,.08);border-color:rgba(245,197,24,.25);}
+.calm{background:rgba(239,68,68,.06);border-color:rgba(239,68,68,.16);}
+.calico{font-size:17px;flex-shrink:0;}
+.calinf{flex:1;}
+.calfx{font-family:'Syne',sans-serif;font-weight:700;font-size:11px;}
+.callbl{font-size:10px;color:var(--text2);margin-top:1px;}
+.calm2{text-align:right;flex-shrink:0;}
+.caltot{font-family:'Syne',sans-serif;font-weight:800;font-size:13px;}
+.calsv{font-size:10px;margin-top:1px;}
+.sp{color:var(--green);}.sn{color:var(--red);}
+.bprr{width:100%;padding:9px;background:transparent;border:1px solid rgba(249,115,22,.3);border-radius:8px;color:var(--orange);font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;cursor:pointer;margin-top:7px;transition:all .2s;}
+.bprr:active{opacity:.8;}
+/* NIVELES */
+.lvhero{background:linear-gradient(135deg,rgba(245,197,24,.1),rgba(59,130,246,.07));border:1px solid rgba(245,197,24,.2);border-radius:13px;padding:15px;margin-bottom:11px;display:flex;align-items:center;gap:12px;}
+.lhc{width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--orange));display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:22px;color:#000;flex-shrink:0;}
+.fasttip{background:linear-gradient(135deg,rgba(34,197,94,.09),rgba(59,130,246,.06));border:1px solid rgba(34,197,94,.2);border-radius:11px;padding:12px;margin-bottom:11px;}
+.ftt{font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:var(--green);margin-bottom:6px;}
+.fti{display:flex;align-items:flex-start;gap:7px;margin-bottom:5px;font-size:12px;color:var(--text2);}
+.fti:last-child{margin-bottom:0;}
+.hlbw{overflow-x:auto;padding:3px 0 7px;scrollbar-width:none;margin-bottom:7px;}
+.hlbw::-webkit-scrollbar{display:none;}
+.hlbar{display:flex;align-items:center;min-width:max-content;}
+.lvcard{background:var(--card);border:1px solid var(--border);border-radius:11px;padding:12px;margin-bottom:7px;}
+.lvc-cur{border-color:rgba(245,197,24,.38);}
+.lcc{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:14px;flex-shrink:0;}
+.lcd{background:var(--green);color:#000;}
+.lcc2{background:linear-gradient(135deg,var(--gold),var(--orange));color:#000;box-shadow:0 0 10px rgba(245,197,24,.4);}
+.lcl{background:var(--bg2);color:var(--text3);border:1px solid var(--border);}
+/* HISTORIAL */
+.hitem{background:var(--card);border:1px solid var(--border);border-radius:11px;padding:12px;margin-bottom:8px;}
+.hih{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.hiN{font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:var(--gold);}
+.hir{display:flex;justify-content:space-between;font-size:12px;padding:2px 0;}
+.hir .hl{color:var(--text2);}
+/* KYC */
+.kprog{display:flex;gap:5px;margin-bottom:15px;}
+.kd{flex:1;height:4px;border-radius:2px;background:var(--border);transition:background .3s;}
+.kd.done{background:var(--green);}.kd.cur{background:var(--gold);}
+.kstep{display:none;}.kstep.active{display:block;}
+.ubx{border:2px dashed var(--border);border-radius:12px;padding:24px 12px;text-align:center;cursor:pointer;transition:all .2s;position:relative;}
+.ubx:hover{border-color:var(--gold);}
+.ubx input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.uico{font-size:28px;margin-bottom:5px;}
+.uptit{font-size:13px;font-weight:600;margin-bottom:2px;}
+.upsub{font-size:11px;color:var(--text2);}
+.upprev{width:100%;border-radius:9px;margin-top:8px;max-height:140px;object-fit:cover;display:none;}
+.otpr{display:flex;gap:7px;justify-content:center;margin:11px 0;}
+.otin{width:42px;height:50px;border-radius:9px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:22px;font-family:'Syne',sans-serif;font-weight:700;text-align:center;outline:none;transition:border .2s;}
+.otin:focus{border-color:var(--gold);}
+.otps{background:rgba(34,197,94,.09);border:1px solid rgba(34,197,94,.2);border-radius:7px;padding:7px 10px;font-size:12px;color:var(--green);margin-bottom:8px;text-align:center;display:none;}
+.tcscr{font-size:12px;line-height:1.7;color:var(--text2);max-height:280px;overflow-y:auto;background:var(--bg2);border-radius:9px;padding:12px;margin-bottom:11px;}
+.tcscr h3{font-family:'Syne',sans-serif;color:var(--text);font-size:13px;margin:12px 0 4px;}
+.tcscr h3:first-child{margin-top:0;}
+.tcck{display:flex;align-items:flex-start;gap:8px;padding:9px;background:var(--bg2);border-radius:8px;cursor:pointer;margin-bottom:8px;}
+.tcck input{width:17px;height:17px;accent-color:var(--gold);flex-shrink:0;margin-top:1px;}
+.tcck span{font-size:12px;color:var(--text2);line-height:1.5;}
+/* T&C FULL */
+.tcf{font-size:13px;line-height:1.7;color:var(--text2);padding:15px;}
+.tcf h3{font-family:'Syne',sans-serif;color:var(--text);font-size:14px;margin:14px 0 5px;}
+.tcf h3:first-child{margin-top:0;}
+/* MISSION SCREEN */
+.mhero{background:linear-gradient(135deg,rgba(59,130,246,.12),rgba(245,197,24,.07));border:1px solid rgba(59,130,246,.2);border-radius:14px;padding:20px;text-align:center;margin-bottom:11px;}
+.mhico{font-size:42px;margin-bottom:8px;}
+.mhtit{font-family:'Syne',sans-serif;font-size:19px;font-weight:800;margin-bottom:7px;}
+.mhtx{font-size:13px;color:var(--text2);line-height:1.6;}
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:11px;}
+.sbox{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;}
+.sbn{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:1px;color:var(--gold);}
+.sbl{font-size:11px;color:var(--text2);margin-top:1px;}
+/* BANKS */
+.bkc{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:13px;margin-bottom:8px;}
+.bkh{display:flex;align-items:center;gap:9px;margin-bottom:10px;}
+.bkl{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.bkn{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;}
+.bkt{font-size:11px;color:var(--text2);}
+.bkr{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(36,61,114,.4);}
+.bkr:last-child{border-bottom:none;}
+.bkrl{font-size:12px;color:var(--text2);}
+.bkrv{font-size:13px;font-weight:600;display:flex;align-items:center;gap:5px;}
+.cpbtn{padding:3px 8px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:11px;cursor:pointer;transition:all .2s;}
+.cpbtn:active{border-color:var(--green);color:var(--green);}
+/* REDES */
+.rbanner{background:linear-gradient(135deg,rgba(34,197,94,.1),rgba(59,130,246,.07));border:1px solid rgba(34,197,94,.2);border-radius:12px;padding:15px;text-align:center;margin-bottom:11px;}
+.rbpts{font-family:'Bebas Neue',sans-serif;font-size:38px;letter-spacing:2px;color:var(--green);}
+.socc{background:var(--card);border:1px solid var(--border);border-radius:11px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:11px;}
+.socico{font-size:27px;flex-shrink:0;}
+.socn{font-family:'Syne',sans-serif;font-weight:700;font-size:13px;}
+.soch{font-size:11px;color:var(--text2);margin-top:1px;}
+.socr{font-size:11px;color:var(--green);font-weight:600;margin-top:2px;}
+.socbtn{margin-left:auto;padding:6px 12px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:11px;font-family:'Outfit',sans-serif;cursor:pointer;flex-shrink:0;transition:all .2s;}
+.socbtn:active{border-color:var(--gold);color:var(--gold);}
+/* CHATS */
+.chatscr{display:none;flex-direction:column;position:absolute;inset:0;padding-bottom:70px;}
+.chatscr.active{display:flex;}
+.chdr{background:rgba(11,26,59,.96);border-bottom:1px solid var(--border);padding:11px 14px;display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.cav{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.av-l{background:linear-gradient(135deg,var(--gold),var(--orange));}
+.av-f{background:linear-gradient(135deg,var(--blue),var(--purple));}
+.cbn{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;}
+.cbs{font-size:11px;color:var(--text2);}
+.onl{width:7px;height:7px;border-radius:50%;margin-left:auto;flex-shrink:0;}
+.chatmsgs{flex:1;overflow-y:auto;padding:11px 13px;display:flex;flex-direction:column;gap:7px;}
+.msg{max-width:84%;padding:10px 12px;border-radius:12px;font-size:13px;line-height:1.5;}
+.msg.bot{background:var(--card);border:1px solid var(--border);border-bottom-left-radius:4px;align-self:flex-start;}
+.msg.user{background:linear-gradient(135deg,rgba(245,197,24,.13),rgba(249,115,22,.08));border:1px solid rgba(245,197,24,.2);border-bottom-right-radius:4px;align-self:flex-end;}
+.qqs{display:flex;gap:5px;flex-wrap:wrap;padding:0 13px 7px;}
+.qq{padding:5px 10px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:11px;cursor:pointer;font-family:'Outfit',sans-serif;transition:all .2s;}
+.qq:active{border-color:var(--gold);color:var(--gold);}
+.cinbar{background:rgba(11,26,59,.97);border-top:1px solid var(--border);padding:9px 13px;display:flex;gap:7px;flex-shrink:0;}
+.cin{flex:1;padding:10px 12px;background:var(--card);border:1px solid var(--border);border-radius:9px;color:var(--text);font-size:14px;font-family:'Outfit',sans-serif;outline:none;}
+.cin:focus{border-color:var(--gold);}
+.csend{width:40px;height:40px;border-radius:9px;border:none;cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.sl{background:var(--gold);}.sf{background:var(--blue);}
+.typing{display:flex;gap:4px;padding:9px 12px;}
+.typing span{width:6px;height:6px;border-radius:50%;background:var(--text3);animation:dot .8s infinite;}
+.typing span:nth-child(2){animation-delay:.15s;}.typing span:nth-child(3){animation-delay:.3s;}
+@keyframes dot{0%,100%{transform:translateY(0);}50%{transform:translateY(-5px);opacity:.6;}}
+/* PERFIL */
+.phero{background:linear-gradient(135deg,rgba(245,197,24,.1),rgba(59,130,246,.07));border:1px solid rgba(245,197,24,.18);border-radius:13px;padding:18px;text-align:center;margin-bottom:11px;}
+.phav{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--orange));display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:24px;color:#000;margin:0 auto 8px;}
+.phn{font-family:'Syne',sans-serif;font-weight:800;font-size:18px;}
+.phc{font-size:12px;color:var(--text2);margin-top:2px;}
+.phl{margin-top:7px;display:inline-block;padding:3px 12px;border-radius:20px;background:rgba(245,197,24,.13);color:var(--gold);font-size:12px;font-weight:700;}
+.prow{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(36,61,114,.4);}
+.prow:last-child{border-bottom:none;}
+.prl{font-size:12px;color:var(--text2);}.prv{font-size:12px;font-weight:600;}
+/* SUCCESS */
+.swrap{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:26px 20px;text-align:center;}
+.sico{font-size:52px;margin-bottom:11px;}
+.swrap h3{font-family:'Syne',sans-serif;font-size:21px;font-weight:800;color:var(--green);margin-bottom:8px;}
+.swrap p{color:var(--text2);font-size:13px;line-height:1.6;max-width:280px;}
+/* WA */
+#waBtn{position:fixed;bottom:79px;right:14px;width:48px;height:48px;border-radius:50%;background:#25D366;border:none;display:none;align-items:center;justify-content:center;font-size:22px;cursor:pointer;z-index:45;box-shadow:0 4px 12px rgba(37,211,102,.35);}
+#waBtn.on{display:flex;}
+#waBtn:active{transform:scale(.9);}
+/* TOAST */
+#toast{position:fixed;bottom:79px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--green);color:#000;padding:8px 16px;border-radius:20px;font-size:13px;font-weight:600;z-index:99;opacity:0;transition:all .3s;white-space:nowrap;max-width:90%;pointer-events:none;}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
+#toast.err{background:var(--red);color:#fff;}
+.seh{margin:11px 0 8px;}
+.seh h2{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;}
+.seh p{font-size:11px;color:var(--text2);margin-top:2px;}
+.est{text-align:center;padding:28px 0;color:var(--text3);}
+::-webkit-scrollbar{width:3px;}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+</style>
+</head>
+<body>
+<!-- AUTH -->
+<div class="screen noscroll active" id="s-auth">
+<div class="auth-wrap">
+  <span class="auth-mascot">🤖</span>
+  <div class="auth-logo">LUKERO</div>
+  <div class="auth-tag">Tu crédito en minutos · 100% digital</div>
+  <div class="auth-card">
+    <div class="atabs">
+      <button class="atab on" onclick="sat('login')">Ingresar</button>
+      <button class="atab" onclick="sat('reg')">Registrarse</button>
+    </div>
+    <div id="aLogin">
+      <div class="field"><label>Cédula</label><input type="number" id="lCed" placeholder="1020304050"></div>
+      <div class="field"><label>Contraseña</label><input type="password" id="lPw" placeholder="••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <button class="btn" onclick="doLogin()">INGRESAR</button>
+      <div class="err" id="lErr"></div>
+      <div class="auth-foot">¿Nuevo? Usa la pestaña Registrarse</div>
+    </div>
+    <div id="aReg" style="display:none;">
+      <div class="field"><label>Nombre completo</label><input id="rNom" placeholder="María Fernández"></div>
+      <div class="field"><label>Cédula</label><input type="number" id="rCed" placeholder="1020304050"></div>
+      <div class="field"><label>Teléfono / WhatsApp</label><input type="tel" id="rTel" placeholder="3001234567"></div>
+      <div class="field"><label>Ciudad</label><input id="rCiu" placeholder="Bogotá"></div>
+      <div class="field"><label>Contraseña</label><input type="password" id="rPw" placeholder="Mínimo 6 caracteres"></div>
+      <div class="field"><label>Confirmar</label><input type="password" id="rPw2" placeholder="Repite tu contraseña"></div>
+      <button class="btn" onclick="doReg()">CREAR CUENTA</button>
+      <div class="err" id="rErr"></div>
+      <div class="auth-foot">Aceptas los <a onclick="nav('tyc')">T&amp;C</a> de NEXECO SAS</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- KYC -->
+<div class="screen noscroll" id="s-kyc">
+<div class="auth-wrap" style="justify-content:flex-start;padding-top:22px;">
+  <span style="font-size:50px;display:block;margin-bottom:4px;animation:fl 3s ease-in-out infinite;">🤖</span>
+  <div class="auth-logo" style="font-size:34px;">LUKERO</div>
+  <div class="auth-tag">Verificación de identidad</div>
+  <div class="auth-card" style="max-width:370px;">
+    <div class="kprog"><div class="kd cur" id="kd0"></div><div class="kd" id="kd1"></div><div class="kd" id="kd2"></div><div class="kd" id="kd3"></div><div class="kd" id="kd4"></div></div>
+    <div class="kstep active" id="k0">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px;margin-bottom:4px;">Foto de tu cédula</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:10px;">Parte frontal con nombre y número visibles.</div>
+      <div class="ubx"><div class="uico">🪪</div><div class="uptit">Cédula (frente)</div><div class="upsub">JPG o PNG</div><input type="file" accept="image/*" onchange="prevImg(this,'pc0')"></div>
+      <img id="pc0" class="upprev">
+      <button class="btn" style="margin-top:12px;" onclick="kgo(1)">Continuar →</button>
+    </div>
+    <div class="kstep" id="k1">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px;margin-bottom:4px;">Selfie con cédula</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:10px;">Foto con cara + cédula visibles.</div>
+      <div class="ubx"><div class="uico">🤳</div><div class="uptit">Selfie con cédula</div><div class="upsub">Cara + cédula en una foto</div><input type="file" accept="image/*" capture="user" onchange="prevImg(this,'pc1')"></div>
+      <img id="pc1" class="upprev">
+      <button class="btn" style="margin-top:12px;" onclick="kgo(2)">Continuar →</button>
+      <button class="btn-ghost" onclick="kgo(0)">← Atrás</button>
+    </div>
+    <div class="kstep" id="k2">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px;margin-bottom:4px;">Verifica tu WhatsApp</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:10px;">Enviamos un código a <strong id="kTel" style="color:var(--gold);"></strong></div>
+      <button class="btn" style="background:rgba(37,211,102,.18);border:1px solid rgba(37,211,102,.3);color:#25D366;margin-bottom:9px;" onclick="sOTP('wa')">📲 Enviar código WhatsApp</button>
+      <div class="otps" id="otpWs">✅ Código enviado. Revisa tu WhatsApp.</div>
+      <div class="otpr"><input class="otin" maxlength="1" oninput="om(this,0,'w')" id="w0"><input class="otin" maxlength="1" oninput="om(this,1,'w')" id="w1"><input class="otin" maxlength="1" oninput="om(this,2,'w')" id="w2"><input class="otin" maxlength="1" oninput="om(this,3,'w')" id="w3"><input class="otin" maxlength="1" oninput="om(this,4,'w')" id="w4"><input class="otin" maxlength="1" oninput="om(this,5,'w')" id="w5"></div>
+      <button class="btn" onclick="vOTP('wa')">Verificar</button>
+      <div class="err" id="eWa"></div>
+      <button class="btn-ghost" onclick="kgo(1)">← Atrás</button>
+    </div>
+    <div class="kstep" id="k3">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px;margin-bottom:4px;">Verifica tu correo</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:10px;">Ingresa tu correo para recibir el código.</div>
+      <div class="field"><label>Correo electrónico</label><input type="email" id="kEm" placeholder="tucorreo@gmail.com"></div>
+      <button class="btn" style="margin-bottom:9px;" onclick="sOTP('em')">📧 Enviar código</button>
+      <div class="otps" id="otpEs">✅ Código enviado. Revisa tu bandeja.</div>
+      <div class="otpr"><input class="otin" maxlength="1" oninput="om(this,0,'e')" id="e0"><input class="otin" maxlength="1" oninput="om(this,1,'e')" id="e1"><input class="otin" maxlength="1" oninput="om(this,2,'e')" id="e2"><input class="otin" maxlength="1" oninput="om(this,3,'e')" id="e3"><input class="otin" maxlength="1" oninput="om(this,4,'e')" id="e4"><input class="otin" maxlength="1" oninput="om(this,5,'e')" id="e5"></div>
+      <button class="btn" onclick="vOTP('em')">Verificar</button>
+      <div class="err" id="eEm"></div>
+      <button class="btn-ghost" onclick="kgo(2)">← Atrás</button>
+    </div>
+    <div class="kstep" id="k4">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px;margin-bottom:4px;">Términos y condiciones</div>
+      <div class="tcscr" id="tcKyc"></div>
+      <label class="tcck"><input type="checkbox" id="tc1" onchange="chkTC()"><span>He leído y acepto los <strong>Términos y Condiciones</strong> de NEXECO SAS</span></label>
+      <label class="tcck"><input type="checkbox" id="tc2" onchange="chkTC()"><span>Autorizo el <strong>tratamiento de mis datos personales</strong> (Ley 1581 de 2012)</span></label>
+      <label class="tcck"><input type="checkbox" id="tc3" onchange="chkTC()"><span>La información suministrada es <strong>verídica</strong></span></label>
+      <button class="btn" id="btnKyc" onclick="finKYC()" disabled style="opacity:.5;">COMPLETAR REGISTRO</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- HOME -->
+<div class="screen" id="s-home">
+<div class="hero">
+  <span class="mascot">🤖</span>
+  <h1 id="hGreet">HOLA!</h1>
+  <div class="hero-sub">Tu crédito express · sin filas · sin bancos</div>
+  <div class="hbadges">
+    <span class="hb hb-g">⚡ Hasta $10.000.000</span>
+    <span class="hb hb-gr">✓ 100% Digital</span>
+    <span class="hb hb-b">🔒 Seguro</span>
+  </div>
+</div>
+<div class="pw">
+  <div class="mstrip">
+    <div class="mst">¿Por qué Lukero?</div>
+    <div class="msx">El 60% de los colombianos no accede a crédito bancario. Lukero nació para cambiar eso — sin papeleo, sin filas, sin historial previo requerido.</div>
+    <div class="mpil">
+      <div class="mp"><div class="mi">⚡</div><div class="mt">Aprobación en minutos</div></div>
+      <div class="mp"><div class="mi">📈</div><div class="mt">Mejoras con cada pago</div></div>
+      <div class="mp"><div class="mi">🔒</div><div class="mt">Costos 100% transparentes</div></div>
+    </div>
+  </div>
+  <div id="caHome"></div>
+  <div class="simw">
+    <div class="ctitle">⚡ Simula tu crédito</div>
+    <div class="slbl">Nivel</div>
+    <div class="lvsc" id="hLvs"></div>
+    <div id="hGrace" style="display:none;" class="grace">🎁 ¡1 día de gracia gratis para nuevos!</div>
+    <div class="slbl" style="margin-top:9px;">Monto</div>
+    <div class="capg" id="hCaps"></div>
+    <div id="hPrr"></div>
+    <div id="hRes"></div>
+    <button class="btna" onclick="goSol()">SOLICITAR AHORA ›</button>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:4px;">
+    <div class="card" style="text-align:center;padding:11px 7px;margin-bottom:0;"><div style="font-size:20px;margin-bottom:3px;">📱</div><div style="font-size:11px;font-weight:600;margin-bottom:1px;">Solicita</div><div style="font-size:10px;color:var(--text2);">Llena el formulario</div></div>
+    <div class="card" style="text-align:center;padding:11px 7px;margin-bottom:0;"><div style="font-size:20px;margin-bottom:3px;">⚡</div><div style="font-size:11px;font-weight:600;margin-bottom:1px;">Aprobamos</div><div style="font-size:10px;color:var(--text2);">En minutos</div></div>
+    <div class="card" style="text-align:center;padding:11px 7px;margin-bottom:0;"><div style="font-size:20px;margin-bottom:3px;">💰</div><div style="font-size:11px;font-weight:600;margin-bottom:1px;">Recibe</div><div style="font-size:10px;color:var(--text2);">Nequi o cuenta</div></div>
+  </div>
+</div>
+</div>
+
+<!-- CRÉDITO -->
+<div class="screen" id="s-cred">
+<nav class="topnav"><div class="nav-logo">Mi Crédito</div></nav>
+<div class="pw" id="credBody"></div>
+</div>
+
+<!-- HISTORIAL -->
+<div class="screen" id="s-hist">
+<nav class="topnav"><div class="nav-logo">Historial</div></nav>
+<div class="pw"><div class="seh"><h2>Tus créditos anteriores</h2></div><div id="histBody"></div></div>
+</div>
+
+<!-- NIVELES -->
+<div class="screen" id="s-niv">
+<nav class="topnav"><div class="nav-logo">Niveles</div></nav>
+<div class="pw">
+  <div id="nivHero"></div>
+  <div class="fasttip">
+    <div class="ftt">🚀 ¿Cómo subir de nivel más rápido?</div>
+    <div class="fti"><span>🟢</span><span><strong>Paga 3 días antes:</strong> puntos dobles + póliza e interés GRATIS. La forma más rápida de subir.</span></div>
+    <div class="fti"><span>🟡</span><span><strong>Paga el día de pago</strong> antes de las 12pm: 40% descuento en gastos tecnológicos.</span></div>
+    <div class="fti"><span>📋</span><span><strong>Mínimo 3 créditos</strong> por nivel para avanzar (más en niveles altos).</span></div>
+    <div class="fti"><span>📲</span><span><strong>Síguenos en redes</strong> y gana puntos que aceleran tu progreso sin créditos extra.</span></div>
+    <div class="fti"><span>👥</span><span><strong>Refiere amigos:</strong> +200 puntos por cada uno que complete su primer crédito.</span></div>
+  </div>
+  <div class="seh"><h2>Mapa de niveles</h2><p>Verde = desbloqueado · Dorado = tú · Rojo = por desbloquear</p></div>
+  <div class="hlbw"><div class="hlbar" id="hlBar"></div></div>
+  <div id="nivGrid"></div>
+</div>
+</div>
+
+<!-- LUKA -->
+<div class="chatscr" id="s-luka">
+<div class="chdr">
+  <div class="cav av-l">🤖</div>
+  <div><div class="cbn" style="color:var(--gold);">LUKA</div><div class="cbs">Asistente Lukero</div></div>
+  <div class="onl" style="background:var(--green);"></div>
+</div>
+<div class="chatmsgs" id="lukaMsgs"></div>
+<div class="qqs" id="lukaQs">
+  <button class="qq" onclick="lQ('¿Cuánto debo en mi crédito activo?')">Mi deuda 💰</button>
+  <button class="qq" onclick="lQ('¿Cómo subo de nivel más rápido?')">Subir nivel ⬆️</button>
+  <button class="qq" onclick="lQ('¿Qué pasa si no puedo pagar?')">No puedo pagar 😟</button>
+  <button class="qq" onclick="lQ('¿Qué es una prórroga?')">Prórroga ⏱</button>
+</div>
+<div class="cinbar">
+  <input class="cin" id="lukaIn" placeholder="Pregúntale a Luka..." onkeydown="if(event.key==='Enter')lS()">
+  <button class="csend sl" onclick="lS()">↑</button>
+</div>
+</div>
+
+<!-- FINN -->
+<div class="chatscr" id="s-finn">
+<div class="chdr">
+  <div class="cav av-f">🧠</div>
+  <div><div class="cbn" style="color:var(--blue2);">FINN</div><div class="cbs">Asesor Financiero Independiente</div></div>
+  <div class="onl" style="background:var(--blue);"></div>
+</div>
+<div class="chatmsgs" id="finnMsgs"></div>
+<div class="qqs" id="finnQs">
+  <button class="qq" onclick="fQ('¿Cómo mejorar mi historial crediticio?')">Historial 📈</button>
+  <button class="qq" onclick="fQ('¿Cómo ahorrar con ingresos bajos?')">Ahorrar 💰</button>
+  <button class="qq" onclick="fQ('¿Vale la pena pagar anticipado?')">Pago anticipado ⏰</button>
+  <button class="qq" onclick="fQ('¿Cómo salir de deudas?')">Salir de deudas 🆘</button>
+</div>
+<div class="cinbar">
+  <input class="cin" id="finnIn" placeholder="Consúltale a Finn..." onkeydown="if(event.key==='Enter')fS()">
+  <button class="csend sf" onclick="fS()">↑</button>
+</div>
+</div>
+
+<!-- SOLICITAR -->
+<div class="screen" id="s-sol">
+<nav class="topnav"><div class="nav-logo" style="cursor:pointer;" onclick="nav('home')">‹ Volver</div></nav>
+<div class="pw" id="solBody"></div>
+</div>
+
+<!-- ÉXITO -->
+<div class="screen noscroll" id="s-ok">
+<div class="swrap">
+  <div class="sico">✅</div>
+  <h3>¡Solicitud enviada!</h3>
+  <p id="okMsg"></p>
+  <button class="btn" style="max-width:240px;margin-top:18px;" onclick="nav('home')">← Volver al inicio</button>
+</div>
+</div>
+
+<!-- PERFIL -->
+<div class="screen" id="s-perfil">
+<nav class="topnav"><div class="nav-logo">Mi Perfil</div></nav>
+<div class="pw" id="perfilBody"></div>
+</div>
+
+<!-- T&C -->
+<div class="screen" id="s-tyc">
+<nav class="topnav"><div class="nav-logo" style="cursor:pointer;" onclick="history.back()">‹ Volver</div><div style="font-size:12px;color:var(--text2);">NEXECO SAS</div></nav>
+<div class="tcf" id="tcFull"></div>
+</div>
+
+<!-- QUIÉNES SOMOS -->
+<div class="screen" id="s-nos">
+<nav class="topnav"><div class="nav-logo">Lukero</div></nav>
+<div class="pw">
+  <div class="mhero"><div class="mhico">🤖</div><div class="mhtit">Inclusión financiera para todos</div><div class="mhtx">En Lukero creemos que el acceso al crédito no debería depender de cuánto tiempo llevas en el sistema bancario. Somos la alternativa para los colombianos que el banco ignoró — con costos claros, sin sorpresas.</div></div>
+  <div class="sgrid">
+    <div class="sbox"><div class="sbn">100%</div><div class="sbl">Digital · sin filas</div></div>
+    <div class="sbox"><div class="sbn">8</div><div class="sbl">días de plazo base</div></div>
+    <div class="sbox"><div class="sbn">20</div><div class="sbl">niveles de fidelidad</div></div>
+    <div class="sbox"><div class="sbn">$10M</div><div class="sbl">máximo disponible</div></div>
+  </div>
+  <div class="card"><div class="ctitle">🎯 Nuestra misión</div><p style="font-size:13px;color:var(--text2);line-height:1.7;">Democratizar el acceso al crédito en Colombia. Millones no tienen historial crediticio o simplemente necesitan liquidez rápida y digna. Lukero nació para ellos.</p></div>
+  <div class="card"><div class="ctitle">💡 Por qué existimos</div><p style="font-size:13px;color:var(--text2);line-height:1.7;">Los "gota a gota" cobran hasta el 20% diario. El banco excluye al 60% de los colombianos. Lukero ofrece una alternativa transparente — con costos claros desde el primer clic, plazo base de 8 días, y un sistema de fidelización que premia a quienes cumplen.</p></div>
+  <div class="card"><div class="ctitle">🏢 NEXECO SAS</div><p style="font-size:13px;color:var(--text2);line-height:1.7;">Empresa de tecnología financiera colombiana, domiciliada en Bogotá D.C. Operamos con recursos propios bajo el marco legal del Código de Comercio. Comprometidos con la transparencia y la educación financiera.</p></div>
+  <div class="card"><div class="ctitle">🔒 Cuentas oficiales de pago</div>
+    <div class="bkc"><div class="bkh"><div class="bkl" style="background:rgba(59,130,246,.14);">🏦</div><div><div class="bkn">Bancolombia</div><div class="bkt">Cuenta Ahorros · NEXECO SAS</div></div></div><div class="bkr"><span class="bkrl">No. Cuenta</span><span class="bkrv">123-456789-00<button class="cpbtn" onclick="cpTxt('123-456789-00','Cuenta')">Copiar</button></span></div><div class="bkr"><span class="bkrl">Titular</span><span class="bkrv">NEXECO SAS</span></div></div>
+    <div class="bkc"><div class="bkh"><div class="bkl" style="background:rgba(239,68,68,.14);">🔴</div><div><div class="bkn">Nequi</div><div class="bkt">Billetera digital</div></div></div><div class="bkr"><span class="bkrl">Número</span><span class="bkrv">300 000 0000<button class="cpbtn" onclick="cpTxt('3000000000','Nequi')">Copiar</button></span></div><div class="bkr"><span class="bkrl">Nombre</span><span class="bkrv">NEXECO SAS</span></div></div>
+    <div style="font-size:11px;color:var(--text3);margin-top:5px;text-align:center;">⚠️ Solo pagos a estas cuentas oficiales.</div>
+  </div>
+</div>
+</div>
+
+<!-- REDES -->
+<div class="screen" id="s-red">
+<nav class="topnav"><div class="nav-logo">Gana con Lukero</div></nav>
+<div class="pw">
+  <div class="rbanner"><div class="rbpts">+500 PTS</div><div style="font-size:13px;color:var(--text2);margin-top:3px;">Sigue nuestras redes · acelera tu nivel</div></div>
+  <div class="seh"><h2>📲 Síguenos y gana puntos</h2></div>
+  <div class="socc"><div class="socico">📸</div><div><div class="socn">Instagram</div><div class="soch">@lukero.co · próximamente</div><div class="socr">+150 puntos</div></div><button class="socbtn" onclick="clSoc('ig',150,this)">Seguir</button></div>
+  <div class="socc"><div class="socico">📘</div><div><div class="socn">Facebook</div><div class="soch">@lukero.co · próximamente</div><div class="socr">+100 puntos</div></div><button class="socbtn" onclick="clSoc('fb',100,this)">Me gusta</button></div>
+  <div class="socc"><div class="socico">🎵</div><div><div class="socn">TikTok</div><div class="soch">@lukero.co · próximamente</div><div class="socr">+150 puntos</div></div><button class="socbtn" onclick="clSoc('tt',150,this)">Seguir</button></div>
+  <div class="socc"><div class="socico">▶️</div><div><div class="socn">YouTube</div><div class="soch">Lukero Nanocreditos · próximamente</div><div class="socr">+100 puntos</div></div><button class="socbtn" onclick="clSoc('yt',100,this)">Suscribirse</button></div>
+  <div class="card"><div class="ctitle">👥 Código de referido</div><div style="font-size:13px;color:var(--text2);margin-bottom:9px;">Comparte tu código y gana <strong style="color:var(--gold);">+200 puntos</strong> por cada amigo que complete su primer crédito.</div><div style="background:var(--bg2);border-radius:9px;padding:11px;display:flex;justify-content:space-between;align-items:center;"><span id="refCod" style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:var(--gold);letter-spacing:2px;">LK-XXXXX</span><button class="cpbtn" style="padding:5px 12px;" onclick="cpTxt(document.getElementById('refCod').textContent,'Código')">Copiar</button></div></div>
+</div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav id="bottomNav">
+  <div class="bn active" onclick="nav('home')" id="bn0"><span class="bi">🏠</span><span class="bl">Inicio</span></div>
+  <div class="bn" onclick="nav('cred')" id="bn1"><span class="bi">💳</span><span class="bl">Crédito</span></div>
+  <div class="bn" onclick="nav('niv')" id="bn2"><span class="bi">⭐</span><span class="bl">Niveles</span></div>
+  <div class="bn" onclick="nav('luka')" id="bn3"><span class="bi">🤖</span><span class="bl">Luka IA</span></div>
+  <div class="bn" onclick="openMore()" id="bn4"><span class="bi">☰</span><span class="bl">Más</span></div>
+</nav>
+<div id="moreOv" onclick="closeMore()"></div>
+<div id="moreSheet">
+  <div class="mh"></div>
+  <div class="mgrid">
+    <button class="mbtn" onclick="nav('hist');closeMore()"><span style="font-size:17px;">📋</span>Historial</button>
+    <button class="mbtn" onclick="nav('finn');closeMore()"><span style="font-size:17px;">🧠</span>Asesor Financiero</button>
+    <button class="mbtn" onclick="nav('red');closeMore()"><span style="font-size:17px;">🎁</span>Gana Puntos</button>
+    <button class="mbtn" onclick="nav('nos');closeMore()"><span style="font-size:17px;">🏢</span>Quiénes somos</button>
+    <button class="mbtn" onclick="nav('tyc');closeMore()"><span style="font-size:17px;">📄</span>T&amp;C</button>
+    <button class="mbtn" onclick="nav('perfil');closeMore()"><span style="font-size:17px;">👤</span>Mi Perfil</button>
+  </div>
+</div>
+<button id="waBtn" onclick="openWA()">💬</button>
+<div id="toast"></div>
+<script>
+// DATA
+const AK='lukero_users',CK='lukero_sol';
+// Seed usuario demo si localStorage está vacío
+(function seedDemo(){
+  try{
+    const u=JSON.parse(localStorage.getItem(AK)||'[]');
+    if(!u.find(x=>x.cedula==='1234567890')){
+      u.push({cedula:'1234567890',pass:'demo123',nombre:'Demo Usuario',tel:'3001234567',ciudad:'Bogotá',nivel:3,puntos:1500,creds:2,historial:[],creditoActivo:null,fechaReg:'01/01/2025',sc:{},email:'demo@lukero.co',kycDone:true});
+      localStorage.setItem(AK,JSON.stringify(u));
+    }
+  }catch(e){}
+})();
+// caps: [{monto, ptsReq}] — ptsReq=0 siempre disponible, >0 requiere esos puntos acumulados en el nivel
+// creditoB: desde N5, puede tener 2 créditos simultáneos
+// ptsNivel: puntos necesarios para subir de nivel (2000)
+// ptsPago: {puntual:300, anticipado:600, mora:0}
+// ptsProrroga: 500 pts por prórroga comprada con puntos
+const PTS_NIVEL=2000, PTS_PUNTUAL=300, PTS_ANTICIPADO=600, PTS_PRORROGA=500;
+const NV=[
+  {n:1, nom:'Novato',     tasa:.30,req:3, pr:false,grace:true, sec:false,creditoB:false,
+   caps:[{m:100000,p:0},{m:200000,p:500}]},
+  {n:2, nom:'Bronce I',   tasa:.30,req:3, pr:true, grace:false,sec:false,creditoB:false,
+   caps:[{m:250000,p:0},{m:300000,p:500}]},
+  {n:3, nom:'Bronce II',  tasa:.28,req:3, pr:true, grace:false,sec:false,creditoB:false,
+   caps:[{m:350000,p:0},{m:400000,p:500}]},
+  {n:4, nom:'Plata I',    tasa:.28,req:4, pr:true, grace:false,sec:false,creditoB:false,
+   caps:[{m:450000,p:0},{m:500000,p:500}]},
+  {n:5, nom:'Plata II',   tasa:.26,req:4, pr:true, grace:false,sec:false,creditoB:true,
+   caps:[{m:550000,p:0},{m:600000,p:500},{m:700000,p:1000}]},
+  {n:6, nom:'Oro I',      tasa:.26,req:4, pr:true, grace:false,sec:false,creditoB:true,
+   caps:[{m:750000,p:0},{m:850000,p:500},{m:900000,p:1000}]},
+  {n:7, nom:'Oro II',     tasa:.24,req:5, pr:true, grace:false,sec:false,creditoB:true,
+   caps:[{m:950000,p:0},{m:1050000,p:500},{m:1200000,p:1000}]},
+  {n:8, nom:'Diamante I', tasa:.24,req:5, pr:true, grace:false,sec:false,creditoB:true,
+   caps:[{m:1250000,p:0},{m:1350000,p:500},{m:1500000,p:1000}]},
+  {n:9, nom:'Diamante II',tasa:.22,req:5, pr:true, grace:false,sec:false,creditoB:true,
+   caps:[{m:1550000,p:0},{m:1700000,p:500},{m:2000000,p:1000}]},
+  {n:10,nom:'Elite',      tasa:.22,req:5, pr:true, grace:false,sec:false,creditoB:true,
+   caps:[{m:2050000,p:0},{m:2250000,p:500},{m:2500000,p:1000}]},
+  {n:11,nom:'Elite II',   tasa:.20,req:6, pr:true, grace:false,sec:true, creditoB:true,
+   caps:[{m:2550000,p:0},{m:2800000,p:500},{m:3000000,p:1000}]},
+  {n:12,nom:'Elite III',  tasa:.20,req:6, pr:true, grace:false,sec:true, creditoB:true,
+   caps:[{m:3050000,p:0},{m:3300000,p:500},{m:3500000,p:1000}]},
+  {n:13,nom:'Platino I',  tasa:.18,req:6, pr:true, grace:false,sec:true, creditoB:true,
+   caps:[{m:3550000,p:0},{m:3800000,p:500},{m:4000000,p:1000}]},
+  {n:14,nom:'Platino II', tasa:.18,req:6, pr:true, grace:false,sec:true, creditoB:true,
+   caps:[{m:4050000,p:0},{m:4500000,p:500},{m:5000000,p:1000}]},
+  {n:15,nom:'Platino III',tasa:.16,req:6, pr:true, grace:false,sec:true, creditoB:true,
+   caps:[{m:5050000,p:0},{m:5500000,p:500},{m:6000000,p:1000}]},
+  {n:16,nom:'Titan I',    tasa:.16,req:8, pr:true, grace:false,sec:true, creditoB:true,
+   caps:[{m:6050000,p:0},{m:6500000,p:500},{m:7000000,p:1000}]},
+  {n:17,nom:'Titan II',   tasa:.14,req:8, pr:true, grace:false,sec:true, creditoB:true,
+   caps:[{m:7050000,p:0},{m:7500000,p:500},{m:8000000,p:1000}]},
+  {n:18,nom:'Titan III',  tasa:.14,req:8, pr:true, grace:false,sec:true, creditoB:true,
+   caps:[{m:8050000,p:0},{m:8300000,p:500},{m:8500000,p:1000}]},
+  {n:19,nom:'Legendario', tasa:.12,req:8, pr:true, grace:false,sec:true, creditoB:true,
+   caps:[{m:8550000,p:0},{m:8800000,p:500},{m:9000000,p:1000}]},
+  {n:20,nom:'BLACK',      tasa:.12,req:99,pr:true, grace:false,sec:true, creditoB:true,
+   caps:[{m:9050000,p:0},{m:9500000,p:500},{m:10000000,p:1000}]},
+];
+// Helper: montos disponibles para el usuario según sus puntos
+function capsDisp(lv, puntos){return lv.caps.filter(c=>c.p<=puntos);}
+function capMin(lv){return lv.caps[0].m;}
+function capMax(lv, puntos){const d=capsDisp(lv,puntos);return d.length?d[d.length-1].m:lv.caps[0].m;}
+let CU=null,SS={lv:1,cap:100000,p1:false,p2:false},LH=[],FH=[],OTP={};
+// Points system helpers
+function ptsEnNivel(CU){
+  const ptsAntes=NV.slice(0,CU.nivel-1).reduce((s,l)=>s+l.req,0)*PTS_PUNTUAL;
+  return Math.max(0,(CU.puntos||0)-ptsAntes);
+}
+function ptsParaSiguiente(CU){return Math.max(0,PTS_NIVEL-ptsEnNivel(CU));}
+function pctNivel(CU){return Math.min(100,Math.round(ptsEnNivel(CU)/PTS_NIVEL*100));}
+function addPuntos(tipo){
+  // tipo: 'puntual','anticipado','mora','red','referido'
+  const map={puntual:PTS_PUNTUAL,anticipado:PTS_ANTICIPADO,mora:0,red:0,referido:200};
+  const pts=map[tipo]||0;
+  if(!pts)return;
+  CU.puntos=(CU.puntos||0)+pts;
+  // check level up
+  while(CU.nivel<20 && ptsEnNivel(CU)>=PTS_NIVEL){
+    CU.nivel++;
+    toast('🎉 ¡Subiste al nivel '+CU.nivel+'! '+NV[CU.nivel-1].nom);
+  }
+  svU();
+}
+function comprarProrroga(slot){
+  // slot: 'A' o 'B'
+  if((CU.puntos||0)<PTS_PRORROGA){toast('Necesitas '+PTS_PRORROGA+' pts para comprar una prórroga','err');return;}
+  CU.puntos-=PTS_PRORROGA;
+  if(slot==='B'){if(!CU.creditoActivo?.b)return;if(!SS.p1){SS.p1=true;}else{SS.p1=false;SS.p2=false;}rC();}
+  else{if(!SS.p1){SS.p1=true;}else if(!SS.p2){SS.p2=true;}else{toast('Máximo 2 prórrogas','err');return;}rH();}
+  svU();toast('Prórroga comprada con '+PTS_PRORROGA+' pts ✓');
+}
+const lU=()=>{try{return JSON.parse(localStorage.getItem(AK)||'[]');}catch{return[];}};
+const sU=d=>localStorage.setItem(AK,JSON.stringify(d));
+const lC=()=>{try{return JSON.parse(localStorage.getItem(CK)||'[]');}catch{return[];}};
+const sC=d=>localStorage.setItem(CK,JSON.stringify(d));
+function svU(){const us=lU();const i=us.findIndex(u=>u.cedula===CU.cedula);if(i>=0)us[i]=CU;else us.push(CU);sU(us);}
+function prP(n){return n<=2?.20:n<=5?.18:n<=8?.15:n<=12?.12:n<=16?.10:.08;}
+function calc(cap,lv,p1,p2){
+  const tot=Math.round(cap*.30),int=Math.round(cap*(Math.pow(1.24,12/365)-1)),rest=tot-int;
+  const pol=Math.round(rest*.18),bat=Math.round((rest-pol)/1.19),adm=Math.round(bat*.60),tec=bat-adm;
+  const iva=Math.round((adm+tec)*.19),s=int+adm+tec+pol+iva,aF=adm+(tot-s),base=int+aF+tec+pol+iva;
+  const pct=prP(lv),p1c=p1?Math.round(base*pct):0,p2c=p2?Math.round(base*pct*1.10):0;
+  return{int,adm:aF,tec,pol,iva,base,p1c,p2c,pct,total:cap+base+p1c+p2c};
+}
+function disc(cap,lv,p1,p2,dav,man=false){
+  const c=calc(cap,lv,p1,p2);let{int,adm,tec,pol,iva}=c;
+  if(dav>=3){pol=0;int=0;iva=Math.round((adm+tec)*.19);}
+  else if(dav===2){pol=0;iva=Math.round((adm+tec)*.19);}
+  else if(dav===1){tec=Math.round(tec*.50);iva=Math.round((adm+tec)*.19);}
+  else if(dav===0&&man){tec=Math.round(tec*.60);iva=Math.round((adm+tec)*.19);}
+  const mora=dav<0?Math.round(cap*.01*Math.abs(dav)):0;
+  return{...c,int,adm,tec,pol,iva,mora,total:cap+int+adm+tec+pol+iva+c.p1c+c.p2c+mora,ahorro:c.total-(cap+int+adm+tec+pol+iva+c.p1c+c.p2c)};
+}
+function fxs(fd,p1,p2){
+  const h=new Date(fd+'T12:00:00'),v=new Date(h.getTime()+8*864e5);
+  const q1=p1?new Date(v.getTime()+3*864e5):null,q2=p2?new Date((q1||v).getTime()+3*864e5):null;
+  return{h,v,q1,q2,vf:q2||q1||v};
+}
+function aD(d,n){return new Date(d.getTime()+n*864e5);}
+function fD(d){return d.toLocaleDateString('es-CO',{weekday:'short',day:'2-digit',month:'short'});}
+function fmt(n){return new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',minimumFractionDigits:0}).format(Number(n)||0);}
+// AUTH
+function sat(t){
+  document.getElementById('aLogin').style.display=t==='login'?'':'none';
+  document.getElementById('aReg').style.display=t==='reg'?'':'none';
+  document.querySelectorAll('.atab').forEach((b,i)=>b.classList.toggle('on',(i===0&&t==='login')||(i===1&&t==='reg')));
+}
+function doLogin(){
+  const ced=document.getElementById('lCed').value.trim(),pw=document.getElementById('lPw').value;
+  const err=document.getElementById('lErr');err.textContent='';
+  if(!ced||!pw){err.textContent='Completa todos los campos';return;}
+  const u=lU().find(u=>u.cedula===ced&&u.pass===pw);
+  if(!u){err.textContent='Cédula o contraseña incorrectos';return;}
+  CU=u;enter();
+}
+function doReg(){
+  const n=document.getElementById('rNom').value.trim(),ced=document.getElementById('rCed').value.trim(),tel=document.getElementById('rTel').value.trim(),city=document.getElementById('rCiu').value.trim(),pw=document.getElementById('rPw').value,pw2=document.getElementById('rPw2').value;
+  const err=document.getElementById('rErr');err.textContent='';
+  if(!n||!ced||!tel||!pw){err.textContent='Completa todos los campos';return;}
+  if(pw.length<6){err.textContent='Contraseña mínimo 6 caracteres';return;}
+  if(pw!==pw2){err.textContent='Las contraseñas no coinciden';return;}
+  if(lU().find(u=>u.cedula===ced)){err.textContent='Ya existe una cuenta con esa cédula';return;}
+  window._pu={cedula:ced,pass:pw,nombre:n,tel,ciudad:city,nivel:1,puntos:0,creds:0,historial:[],creditoActivo:null,fechaReg:new Date().toLocaleDateString('es-CO'),sc:{}};
+  document.getElementById('kTel').textContent=tel;
+  document.getElementById('tcKyc').innerHTML=tcH();
+  kgo(0);showScr('s-kyc');
+}
+function enter(){
+  document.getElementById('s-auth').classList.remove('active');
+  document.getElementById('bottomNav').classList.add('on');
+  document.getElementById('waBtn').classList.add('on');
+  SS={lv:CU.nivel||1,cap:NV[(CU.nivel||1)-1].caps[0],p1:false,p2:false};
+  if(CU)document.getElementById('refCod').textContent='LK-'+CU.cedula.toString().slice(-5);
+  nav('home');iLuka();iFinn();
+}
+function doLogout(){
+  CU=null;
+  document.getElementById('bottomNav').classList.remove('on');
+  document.getElementById('waBtn').classList.remove('on');
+  closeMore();
+  document.querySelectorAll('.screen,.chatscr').forEach(s=>s.classList.remove('active'));
+  document.getElementById('s-auth').classList.add('active');
+  document.getElementById('lCed').value='';document.getElementById('lPw').value='';
+}
+// KYC
+function kgo(s){
+  document.querySelectorAll('.kstep').forEach((el,i)=>el.classList.toggle('active',i===s));
+  document.querySelectorAll('.kd').forEach((d,i)=>{d.classList.remove('done','cur');if(i<s)d.classList.add('done');else if(i===s)d.classList.add('cur');});
+}
+function prevImg(inp,id){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{const p=document.getElementById(id);p.src=e.target.result;p.style.display='block';};r.readAsDataURL(f);toast('Imagen cargada ✓');}
+function sOTP(t){const c=Math.floor(100000+Math.random()*900000).toString();OTP[t]=c;if(t==='wa')document.getElementById('otpWs').style.display='block';else{const em=document.getElementById('kEm').value;if(!em){toast('Ingresa tu correo primero','err');return;}document.getElementById('otpEs').style.display='block';}toast('Código (demo): '+c);}
+function om(inp,i,p){if(inp.value&&i<5){const nx=document.getElementById(p+''+(i+1));if(nx)nx.focus();}}
+function gOTP(p){return[0,1,2,3,4,5].map(i=>document.getElementById(p+''+i)?.value||'').join('');}
+function vOTP(t){
+  const p=t==='wa'?'w':'e',entered=gOTP(p),errId=t==='wa'?'eWa':'eEm';
+  if(entered===OTP[t]){toast((t==='wa'?'WhatsApp':'Correo')+' verificado ✓');kgo(t==='wa'?3:4);}
+  else{document.getElementById(errId).textContent='Código incorrecto';setTimeout(()=>document.getElementById(errId).textContent='',3000);}
+}
+function chkTC(){const ok=['tc1','tc2','tc3'].every(id=>document.getElementById(id).checked);const btn=document.getElementById('btnKyc');btn.disabled=!ok;btn.style.opacity=ok?'1':'.5';}
+function finKYC(){if(!window._pu)return;CU={...window._pu,email:document.getElementById('kEm').value,kycDone:true};const us=lU();us.push(CU);sU(us);window._pu=null;enter();toast('¡Bienvenido a Lukero! 🎉');}
+// NAV
+const SM={home:'s-home',cred:'s-cred',hist:'s-hist',niv:'s-niv',luka:'s-luka',finn:'s-finn',red:'s-red',nos:'s-nos',tyc:'s-tyc',perfil:'s-perfil',sol:'s-sol',ok:'s-ok'};
+const BM={home:'bn0',cred:'bn1',niv:'bn2',luka:'bn3',hist:'bn4',finn:'bn4',red:'bn4',nos:'bn4',tyc:'bn4',perfil:'bn4'};
+function showScr(id){document.querySelectorAll('.screen,.chatscr').forEach(s=>s.classList.remove('active'));const el=document.getElementById(id);if(el)el.classList.add('active');}
+function nav(key){
+  const id=SM[key];if(!id)return;showScr(id);
+  document.querySelectorAll('.bn').forEach(b=>b.classList.remove('active'));
+  const bn=BM[key];if(bn)document.getElementById(bn)?.classList.add('active');
+  if(key==='home')rH();
+  if(key==='cred')rC();
+  if(key==='hist')rHist();
+  if(key==='niv')rN();
+  if(key==='perfil')rP();
+  if(key==='tyc')document.getElementById('tcFull').innerHTML=tcH();
+  if(key==='red'&&CU)document.getElementById('refCod').textContent='LK-'+CU.cedula.toString().slice(-5);
+}
+function goSol(){
+  if(!CU)return;
+  const n=NV[CU.nivel-1];
+  if(CU.creditoActivo&&CU.creditoActivo.estado!=='pagado'&&!n.creditoB){toast('Ya tienes un crédito activo','err');return;}
+  if(CU.creditoActivo?.b&&CU.creditoActivo.b.estado!=='pagado'){toast('Ya tienes 2 créditos activos (máximo)','err');return;}
+  SS={lv:CU.nivel,cap:n.caps[0].m,p1:false,p2:false,slot:'A'};rSol();showScr('s-sol');
+}
+function goSolB(){
+  if(!CU)return;
+  const n=NV[CU.nivel-1];
+  if(!n.creditoB){toast('Crédito B disponible desde N5','err');return;}
+  if(!CU.creditoActivo||CU.creditoActivo.estado==='pagado'){toast('Primero solicita el Crédito A','err');return;}
+  if(CU.creditoActivo?.b&&CU.creditoActivo.b.estado!=='pagado'){toast('Ya tienes 2 créditos activos','err');return;}
+  SS={lv:CU.nivel,cap:n.caps[0].m,p1:false,p2:false,slot:'B'};rSol();showScr('s-sol');
+}
+function openMore(){document.getElementById('moreSheet').classList.add('on');document.getElementById('moreOv').classList.add('on');}
+function closeMore(){document.getElementById('moreSheet').classList.remove('on');document.getElementById('moreOv').classList.remove('on');}
+// PRORROGA ROW
+function bPrr(ctx){
+  const n=NV[SS.lv-1];
+  if(!n.pr)return`<div style="font-size:11px;color:var(--text3);text-align:center;margin-top:7px;">N${SS.lv} sin prórroga — sube de nivel para activarla</div>`;
+  const pc=(prP(SS.lv)*100).toFixed(0),pc2=(prP(SS.lv)*110).toFixed(0);
+  if(!SS.p1)return`<div class="prrow"><div><div class="prtit">Agregar prórroga (+3 días)</div><div class="prsub">Costo ${pc}% del total · o <strong style="color:var(--gold);">${PTS_PRORROGA} pts</strong></div></div><div style="display:flex;gap:6px;"><button class="tog" onclick="sP1('${ctx}')"></button><button onclick="comprarProrroga('${ctx==='h'?'A':'B'}')" style="padding:5px 10px;background:rgba(245,197,24,.15);border:1px solid rgba(245,197,24,.25);border-radius:7px;color:var(--gold);font-size:11px;font-family:'Outfit',sans-serif;cursor:pointer;" title="Comprar con puntos">⭐ Pts</button></div></div>`;
+  if(SS.p1&&!SS.p2)return`<div class="prrow"><div><div class="prtit" style="color:var(--orange)">✓ Prórroga 1 activa</div><div class="prsub">+3 días · ${pc}%</div></div><button class="tog on" onclick="sP1('${ctx}')"></button></div><div class="prrow" style="margin-top:6px;"><div><div class="prtit">Agregar 2ª prórroga</div><div class="prsub">+3 días más · ${pc2}%</div></div><button class="tog" onclick="sP2('${ctx}')"></button></div>`;
+  return`<div class="prrow"><div><div class="prtit" style="color:var(--orange)">✓ 2 prórrogas activas (+6 días)</div><div class="prsub">${pc}% + ${pc2}% · máximo</div></div><button class="tog on" onclick="sP1('${ctx}')"></button></div>`;
+}
+function sP1(ctx){if(!SS.p1){SS.p1=true;}else{SS.p1=false;SS.p2=false;}if(ctx==='h')rH();else rSol();}
+function sP2(ctx){SS.p2=!SS.p2;if(ctx==='h')rH();else rSol();}
+// BUILD RESULT + CALENDAR
+function bRes(){
+  const c=calc(SS.cap,SS.lv,SS.p1,SS.p2);
+  const today=new Date();today.setHours(12,0,0,0);
+  const fd=today.toISOString().slice(0,10),f=fxs(fd,SS.p1,SS.p2);
+  const rows=[
+    {ico:'💸',d:f.h,lbl:'Desembolso',cls:'cald',tot:SS.cap,col:'var(--blue2)',sub:'Monto recibido'},
+    {ico:'🟢',d:aD(f.v,-3),lbl:'3 días antes · Póliza + Interés GRATIS',cls:'cal3',dav:3},
+    {ico:'🟢',d:aD(f.v,-2),lbl:'2 días antes · Póliza GRATIS',cls:'cal2',dav:2},
+    {ico:'🟡',d:aD(f.v,-1),lbl:'1 día antes · 50% desc. tecnológicos',cls:'cal1',dav:1},
+    {ico:'⭐',d:f.v,lbl:'Día de pago · 40% desc. tech (antes 12pm)',cls:'calp',dav:0,man:true},
+    {ico:'🔴',d:aD(f.v,1),lbl:'Mora día 1 (+1% diario)',cls:'calm',dav:-1},
+    {ico:'🔴',d:aD(f.v,5),lbl:'Mora día 5 (+5% acum.)',cls:'calm',dav:-5},
+  ];
+  const calH=rows.map(r=>{
+    let tot=r.tot||0,sub=r.sub||'',col=r.col||'var(--text2)';
+    if(r.dav!==undefined){const d=disc(SS.cap,SS.lv,SS.p1,SS.p2,r.dav,r.man||false);tot=d.total;if(d.ahorro>0&&r.dav>0){sub=`<div class="calsv sp">Ahorro ${fmt(d.ahorro)}</div>`;col='var(--green)';}else if(r.dav===0&&r.man){sub=`<div class="calsv sp">Ahorro ${fmt(d.ahorro)}</div>`;col='var(--gold)';}else if(d.mora){sub=`<div class="calsv sn">Mora +${fmt(d.mora)}</div>`;col='var(--red)';}}
+    return`<div class="calr ${r.cls}"><div class="calico">${r.ico}</div><div class="calinf"><div class="calfx">${fD(r.d)}</div><div class="callbl">${r.lbl}</div></div><div class="calm2"><div class="caltot" style="color:${col};">${fmt(tot)}</div>${sub}</div></div>`;
+  }).join('');
+  const n=NV[SS.lv-1];
+  const prBtn=n.pr?(!SS.p1?`<button class="bprr" onclick="sP1('h')">⏱ Agregar prórroga (+3 días · ${(prP(SS.lv)*100).toFixed(0)}% del total)</button>`:SS.p2?'<div style="font-size:10px;color:var(--text3);text-align:center;margin-top:6px;">Máximo 2 prórrogas por crédito</div>':`<button class="bprr" style="border-color:rgba(239,68,68,.3);color:var(--red);" onclick="sP2('h')">⏱ Agregar 2ª prórroga (+3 días más)</button>`):'';
+  return`<div class="sres"><div class="stotl">Total a devolver</div><div class="stot">${fmt(c.total)}</div><div class="clist"><div class="cr"><span class="cl">Capital solicitado</span><span class="cv">${fmt(SS.cap)}</span></div><div class="dv"></div><div class="cr"><span class="cl">Gastos administrativos</span><span class="cv">${fmt(c.adm)}</span></div><div class="cr"><span class="cl">Gastos tecnológicos</span><span class="cv">${fmt(c.tec)}</span></div><div class="cr"><span class="cl">IVA (19%)</span><span class="cv">${fmt(c.iva)}</span></div><div class="cr"><span class="cl">Interés (24% E.A.)</span><span class="cv">${fmt(c.int)}</span></div><div class="cr"><span class="cl">Póliza de riesgo</span><span class="cv">${fmt(c.pol)}</span></div>${SS.p1?`<div class="dv"></div><div class="cr"><span class="cl" style="color:var(--orange)">Prórroga 1 (+3 días)</span><span class="cv" style="color:var(--orange)">${fmt(c.p1c)}</span></div>`:''}${SS.p2?`<div class="cr"><span class="cl" style="color:var(--red)">Prórroga 2 (+3 días)</span><span class="cv" style="color:var(--red)">${fmt(c.p2c)}</span></div>`:''}</div></div><div class="caltit">📅 Calendario de pagos</div><div class="caltl">${calH}</div>${prBtn}<div style="font-size:10px;color:var(--text3);margin-top:5px;text-align:center;">Mora: 1% diario · Plazo base: 8 días</div>`;
+}
+// HOME
+function rH(){
+  if(!CU)return;
+  const h=new Date().getHours();
+  document.getElementById('hGreet').textContent=(h<12?'BUENOS DÍAS':h<18?'BUENAS TARDES':'BUENAS NOCHES')+', '+CU.nombre.split(' ')[0].toUpperCase()+'!';
+  const ca=CU.creditoActivo;
+  let caH='';
+  if(ca&&ca.estado!=='pagado'){
+    const dias=ca.fechaVence?Math.ceil((new Date(ca.fechaVence)-new Date())/864e5):null,pct=ca.total?Math.round((ca.total-ca.saldo)/ca.total*100):0,ov=dias!==null&&dias<0;
+    caH=`<div class="cc" onclick="nav('cred')"><div class="cc-top"><div><div class="cc-lbl">Crédito activo · N${ca.nivel}</div><div class="cc-amt">${fmt(ca.capital)}</div><div class="cc-sub">Total a pagar: ${fmt(ca.total)}</div></div><span class="stbadge st-${ca.estado}">${ca.estado}</span></div><div class="pbar"><div class="pfill" style="width:${pct}%"></div></div><div class="cc-date">${ov?`<span class="dwarn">🚨 Vencido hace ${Math.abs(dias)} día(s)</span>`:dias===0?`<span class="dwarn">⚠️ Vence hoy</span>`:`📅 Vence en ${dias} día(s) · ${ca.fechaVence}`}</div></div>`;
+  }else{caH=`<div class="cc" onclick="goSol()"><div style="text-align:center;padding:18px 0;"><div style="font-size:30px;margin-bottom:5px;">💸</div><p style="font-size:13px;color:var(--text2);">Sin crédito activo<br><span style="font-size:11px;color:var(--text3);">Toca para solicitar</span></p></div></div>`;}
+  document.getElementById('caHome').innerHTML=caH;
+  const n=NV[SS.lv-1],vis=NV.filter(lv=>!lv.sec||CU.nivel>=10);
+  document.getElementById('hGrace').style.display=n.grace?'':'none';
+  document.getElementById('hLvs').innerHTML=vis.map(lv=>`<button class="lvbtn ${lv.n===SS.lv?'on':''}" onclick="SS.lv=${lv.n};SS.cap=NV[${lv.n-1}].caps[0].m;SS.p1=false;SS.p2=false;rH()">N${lv.n}·${lv.nom}</button>`).join('');
+  const pts=CU.puntos||0;
+  document.getElementById('hCaps').innerHTML=n.caps.map(c=>{
+    const avail=c.p<=pts,act=c.m===SS.cap;
+    return `<button class="capb ${act?'on':''} ${!avail?'locked':''}" onclick="${avail?`SS.cap=${c.m};rH()`:`toast('Necesitas ${c.p} pts para desbloquear este monto','err')`}" style="${!avail?'opacity:.45;position:relative;':''}">
+      ${fmt(c.m)}${c.p>0?`<span style="font-size:9px;display:block;color:${avail?'var(--green)':'var(--text3)'};">${avail?'✓ desbloqueado':c.p+' pts'}</span>`:''}
+    </button>`;
+  }).join('');
+  // Crédito B indicator
+  const hasCreditoB = n.creditoB && CU.creditoActivo && CU.creditoActivo.estado!=='pagado';
+  const creditoBActive = CU.creditoActivo?.b && CU.creditoActivo.b.estado!=='pagado';
+  if(n.creditoB){
+    const bDiv=document.createElement('div');bDiv.style.cssText='margin-top:9px;';
+    bDiv.innerHTML=`<div style="background:linear-gradient(135deg,rgba(167,139,250,.12),rgba(59,130,246,.08));border:1px solid rgba(167,139,250,.25);border-radius:10px;padding:11px 13px;display:flex;align-items:center;justify-content:space-between;">
+      <div><div style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:var(--purple);">💳 Crédito B desbloqueado</div>
+      <div style="font-size:11px;color:var(--text2);margin-top:2px;">${creditoBActive?'Activo — '+fmt(CU.creditoActivo.b.capital):hasCreditoB?'Disponible — pide tu 2º crédito':'Disponible desde N5'}</div></div>
+      ${(!hasCreditoB&&n.creditoB)||(!creditoBActive&&CU.creditoActivo)?`<button onclick="goSolB()" style="padding:7px 13px;background:var(--purple);border:none;border-radius:8px;color:#000;font-family:'Syne',sans-serif;font-weight:700;font-size:12px;cursor:pointer;">Solicitar B</button>`:''}
+    </div>`;
+    document.getElementById('hRes').parentNode.insertBefore(bDiv, document.getElementById('hRes'));
+  }
+  document.getElementById('hPrr').innerHTML=bPrr('h');
+  document.getElementById('hRes').innerHTML=bRes();
+}
+// CRÉDITO
+function rC(){
+  if(!CU)return;
+  const ca=CU.creditoActivo;
+  if(!ca||ca.estado==='pagado'){document.getElementById('credBody').innerHTML=`<div class="est"><div style="font-size:30px;margin-bottom:5px;">💳</div><p style="font-size:13px;">Sin crédito activo</p></div><button class="btna" onclick="goSol()">SOLICITAR CRÉDITO ›</button>`;return;}
+  const dias=ca.fechaVence?Math.ceil((new Date(ca.fechaVence)-new Date())/864e5):null,pct=ca.total?Math.round((ca.total-ca.saldo)/ca.total*100):0,ov=dias!==null&&dias<0;
+  const oldSS={...SS};SS={lv:ca.nivel,cap:ca.capital,p1:ca.p1||false,p2:ca.p2||false};
+  const calH=bRes();SS=oldSS;
+  document.getElementById('credBody').innerHTML=`<div class="cc" style="cursor:default;"><div class="cc-top"><div><div class="cc-lbl">N${ca.nivel} · ${NV[ca.nivel-1].nom}</div><div class="cc-amt">${fmt(ca.capital)}</div><div class="cc-sub">Total: <strong style="color:var(--gold)">${fmt(ca.total)}</strong></div></div><span class="stbadge st-${ca.estado}">${ca.estado}</span></div><div class="pbar"><div class="pfill" style="width:${pct}%"></div></div><div class="cc-date">${ov?`<span class="dwarn">🚨 Vencido hace ${Math.abs(dias)} día(s)</span>`:dias===0?`<span class="dwarn">⚠️ Vence hoy</span>`:`📅 Vence en ${dias} día(s) · ${ca.fechaVence}`}</div></div><div class="card">${calH}</div>${ov?`<div style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:10px;padding:12px;text-align:center;margin-top:9px;"><div style="font-weight:700;color:var(--red);margin-bottom:3px;">🚨 Mora activa — 1% diario</div><div style="font-size:12px;color:var(--text2);">Contacta a tu asesor cuanto antes.</div></div>`:''}`;
+}
+// HISTORIAL
+function rHist(){
+  if(!CU)return;
+  const h=CU.historial||[];
+  if(!h.length){document.getElementById('histBody').innerHTML=`<div class="est"><div style="font-size:30px;margin-bottom:5px;">📋</div><p style="font-size:13px;">Sin créditos anteriores</p></div>`;return;}
+  document.getElementById('histBody').innerHTML=[...h].reverse().map((it,i)=>`<div class="hitem"><div class="hih"><span class="hiN">Crédito #${h.length-i}</span><span class="stbadge st-${it.estado}">${it.estado}</span></div><div class="hir"><span class="hl">Capital</span><span style="color:var(--gold);font-weight:600;">${fmt(it.capital)}</span></div><div class="hir"><span class="hl">Total pagado</span><span>${fmt(it.total)}</span></div><div class="hir"><span class="hl">Nivel</span><span>N${it.nivel} · ${NV[it.nivel-1].nom}</span></div><div class="hir"><span class="hl">Desembolso</span><span>${it.fechaD}</span></div><div class="hir"><span class="hl">Vencimiento</span><span>${it.fechaV}</span></div></div>`).join('');
+}
+// NIVELES
+function rN(){
+  if(!CU)return;
+  const un=CU.nivel,cr=CU.creds||0,n=NV[un-1];
+  const ptsNiv=ptsEnNivel(CU),pct=pctNivel(CU);
+  document.getElementById('nivHero').innerHTML=`<div class="lvhero"><div class="lhc">N${un}</div><div style="flex:1;"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:17px;">N${un} · ${n.nom}</div><div style="font-size:12px;color:var(--text2);margin-top:1px;">${CU.puntos||0} puntos · ${cr} crédito(s)</div><div style="margin-top:8px;"><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:4px;"><span>Puntos para subir</span><span>${ptsEnNivel(CU)||0}/2000 pts</span></div><div class="pbar"><div class="pfill" style="width:${pctNivel(CU)}%"></div></div><div style="font-size:11px;color:var(--text3);margin-top:2px;">${ptsParaSiguiente(CU)===0?'¡Listo para subir!':ptsParaSiguiente(CU)+' puntos más para N'+(CU.nivel+1)}</div><div style="font-size:11px;color:var(--text2);margin-top:3px;">💡 Pago puntual +${PTS_PUNTUAL} pts · Anticipado +${PTS_ANTICIPADO} pts · Prórroga con pts: ${PTS_PRORROGA} pts</div></div></div></div>`;
+  const vis=NV.filter(lv=>!lv.sec||un>=10);
+  const bar=vis.map((lv,i,arr)=>{const done=lv.n<un,cur=lv.n===un,last=i===arr.length-1,col=done?'var(--green)':cur?'var(--gold)':'var(--red)',sz=cur?28:20;return`<div style="display:flex;align-items:center;"><div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><div style="width:${sz}px;height:${sz}px;border-radius:50%;background:${col};display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:${cur?'10px':'9px'};color:${done||cur?'#000':'#fff'};${cur?'box-shadow:0 0 9px rgba(245,197,24,.4);':''}flex-shrink:0;">${done?'✓':lv.n}</div><div style="font-size:8px;color:${col};white-space:nowrap;">${lv.nom.split(' ')[0]}</div></div>${!last?`<div style="width:15px;height:3px;background:${done?'var(--green)':'var(--border)'};flex-shrink:0;margin-bottom:12px;"></div>`:''}</div>`;}).join('');
+  document.getElementById('hlBar').innerHTML=bar;
+  const secBan=un<10?`<div style="background:rgba(167,139,250,.07);border:1px dashed rgba(167,139,250,.28);border-radius:11px;padding:16px;text-align:center;margin-bottom:7px;"><div style="font-size:20px;margin-bottom:5px;">🔮</div><div style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:var(--purple);margin-bottom:4px;">N11 – N20 · Niveles Secretos</div><div style="font-size:12px;color:var(--text2);">Llega al nivel 10 para desbloquear créditos hasta <strong style="color:var(--gold)">$10.000.000</strong> con costos desde 12%</div></div>`:'';
+  document.getElementById('nivGrid').innerHTML=secBan+vis.map(lv=>{const done=lv.n<un,cur=lv.n===un,lock=lv.n>un;const pMax=Math.round(lv.caps[lv.caps.length-1].m/10000000*100),pMin=Math.round(lv.caps[0].m/10000000*100);const bc=done?'rgba(34,197,94,.04);border-color:rgba(34,197,94,.18)':cur?'rgba(245,197,24,.06);border-color:rgba(245,197,24,.35)':'var(--card);border-color:var(--border);opacity:.65';const cc=done?'lcd':cur?'lcc2':'lcl';const lc=done?'var(--green)':cur?'var(--gold)':'var(--text3)';const bc2=done?'var(--green)':cur?'var(--gold)':'var(--red)';return`<div class="lvcard ${cur?'lvc-cur':''}" style="background:${bc};"><div style="display:flex;align-items:center;gap:10px;"><div class="lcc ${cc}">${done?'✓':'N'+lv.n}</div><div style="flex:1;min-width:0;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;"><div style="font-family:'Syne',sans-serif;font-weight:700;font-size:12px;color:${lc};">N${lv.n} · ${lv.nom}</div><div style="font-size:11px;color:var(--text3);">${(lv.tasa*100).toFixed(0)}% costo</div></div><div style="font-size:12px;font-weight:600;color:${lock?'var(--text3)':'var(--text)'};margin-bottom:5px;">${lock?'🔒 ':''}${fmt(lv.caps[0].m)} → ${fmt(lv.caps[lv.caps.length-1].m)}</div><div style="height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:3px;position:relative;"><div style="position:absolute;left:${pMin}%;width:${pMax-pMin}%;height:100%;background:${bc2};border-radius:3px;"></div></div><div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text3);margin-bottom:3px;"><span>${fmt(lv.caps[0])}</span><span>de $10M</span><span>${fmt(lv.caps[lv.caps.length-1])}</span></div><div style="display:flex;gap:4px;flex-wrap:wrap;">${lv.grace?'<span style="background:rgba(34,197,94,.14);color:var(--green);padding:2px 6px;border-radius:5px;font-size:9px;font-weight:600;">🎁 Día gracia</span>':''}${lv.pr?'<span style="background:rgba(59,130,246,.11);color:var(--blue2);padding:2px 6px;border-radius:5px;font-size:9px;font-weight:600;">⏱ Prórroga</span>':''}</div><div style="font-size:10px;color:var(--text3);margin-top:2px;">${lv.req===99?'Nivel máximo':'Req. '+lv.req+' creds · 2000 pts para subir'}${lv.creditoB?' · <span style="color:var(--purple);">💳 Crédito B</span>':''}</div>
+<div style="display:flex;gap:3px;flex-wrap:wrap;margin-top:4px;">${lv.caps.map(c=>{const upts=cur?(CU?.puntos||0):0;const av=!lock&&c.p<=upts;return `<span style="padding:2px 6px;border-radius:5px;font-size:9px;font-weight:600;background:${av?'rgba(34,197,94,.13)':lock?'rgba(42,64,128,.3)':'rgba(245,197,24,.1)'};color:${av?'var(--green)':lock?'var(--text3)':'var(--gold)'};">${fmt(c.m)}${c.p>0?' ('+c.p+'pts)':''}</span>`;}).join('')}</div></div></div></div>`;}).join('');
+}
+// SOLICITAR
+function rSol(){
+  const n=NV[SS.lv-1],vis=NV.filter(lv=>!lv.sec||CU?.nivel>=10);
+  document.getElementById('solBody').innerHTML=`<div class="seh"><h2>Solicitar crédito ${SS.slot==='B'?'<span style="background:rgba(167,139,250,.2);color:var(--purple);padding:2px 9px;border-radius:20px;font-size:12px;">💳 B</span>':''}</h2><p>Configura, revisa las fechas y envía</p></div><div class="simw"><div class="ctitle">⚡ Configura tu crédito</div><div class="slbl">Nivel</div><div class="lvsc">${vis.map(lv=>`<button class="lvbtn ${lv.n===SS.lv?'on':''}" onclick="SS.lv=${lv.n};SS.cap=NV[${lv.n-1}].caps[0].m;SS.p1=false;SS.p2=false;rSol()">N${lv.n}·${lv.nom}</button>`).join('')}</div>${n.grace?'<div class="grace" style="margin-top:7px;">🎁 ¡1 día de gracia gratis! Pagas el día 9 sin penalización.</div>':''}<div class="slbl" style="margin-top:9px;">Monto</div><div class="capg">${(()=>{const pts=CU?.puntos||0;return n.caps.map(c=>{const av=c.p<=pts,ac=c.m===SS.cap;return `<button class="capb ${ac?'on':''}" onclick="${av?`SS.cap=${c.m};rSol()`:``}" style="${!av?'opacity:.45;':''}"><span>${fmt(c.m)}</span>${c.p>0?`<span style="font-size:9px;display:block;color:${av?'var(--green)':'var(--text3)'};">${av?'✓ '+c.p+' pts req':c.p+' pts'}</span>`:''}${!av?`<span style="font-size:9px;display:block;color:var(--red);">🔒 bloqueado</span>`:''}</button>`;}).join('');})()}</div>${bPrr('s')}${bRes()}</div><div class="card"><div class="ctitle">📋 Tus datos</div><div class="cr" style="padding:6px 0;font-size:13px;"><span style="color:var(--text2);">Nombre</span><span style="font-weight:600;">${CU?.nombre}</span></div><div class="cr" style="padding:6px 0;font-size:13px;"><span style="color:var(--text2);">Cédula</span><span style="font-weight:600;">${CU?.cedula}</span></div><div class="cr" style="padding:6px 0;font-size:13px;"><span style="color:var(--text2);">Teléfono</span><span style="font-weight:600;">${CU?.tel}</span></div><button class="btna" onclick="enviar()">ENVIAR SOLICITUD ›</button><p style="text-align:center;font-size:11px;color:var(--text3);margin-top:8px;">Información confidencial y segura 🔒</p></div>`;
+}
+function enviar(){
+  const c=calc(SS.cap,SS.lv,SS.p1,SS.p2);
+  const hoy=new Date();hoy.setHours(12,0,0,0);
+  const fd=hoy.toISOString().slice(0,10),f=fxs(fd,SS.p1,SS.p2);
+  const fv=f.v.toISOString().slice(0,10),fvf=f.vf.toISOString().slice(0,10);
+  const credObj={capital:SS.cap,total:c.total,saldo:c.total,nivel:SS.lv,p1:SS.p1,p2:SS.p2,estado:'activo',fechaDesembolso:fd,fechaVence:fv,fechaVenceFinal:fvf};
+  if(SS.slot==='B'){
+    if(!CU.creditoActivo)CU.creditoActivo={estado:'pagado'};
+    CU.creditoActivo.b=credObj;
+  } else {
+    if(!CU.creditoActivo||CU.creditoActivo.estado==='pagado') CU.creditoActivo=credObj;
+    else CU.creditoActivo=credObj;
+  }
+  svU();
+  const cr=lC();cr.push({id:'sol_'+Date.now(),nombre:CU.nombre,cedula:CU.cedula,tel:CU.tel,ciudad:CU.ciudad||'',nivel:SS.lv,capitalActivo:SS.cap,totalPagar:c.total,estado:'activo',pr1:SS.p1,pr2:SS.p2,fuente:'Lukero App',fechaDesembolso:fd,fechaVence:fvf,puntos:CU.puntos,creditosCompletados:CU.creds||0,timestamp:new Date().toISOString()});sC(cr);
+  document.getElementById('okMsg').innerHTML=`Hola <strong>${CU.nombre.split(' ')[0]}</strong>, recibimos tu solicitud de <strong>${fmt(SS.cap)}</strong>.<br><br>📅 Fecha de pago: <strong>${fD(f.v)}</strong>${SS.p1?`<br>⏱ Prórroga 1 hasta: <strong>${fD(f.q1)}</strong>`:''}${SS.p2?`<br>⏱ Prórroga 2 hasta: <strong>${fD(f.q2)}</strong>`:''}<br><br>Un asesor te contactará al <strong>${CU.tel}</strong>.`;
+  showScr('s-ok');
+}
+// PERFIL
+function rP(){
+  if(!CU)return;
+  document.getElementById('perfilBody').innerHTML=`<div class="phero"><div class="phav">${CU.nombre[0].toUpperCase()}</div><div class="phn">${CU.nombre}</div><div class="phc">CC ${CU.cedula}</div><div class="phl">N${CU.nivel} · ${NV[CU.nivel-1].nom} · ${CU.puntos||0} pts</div></div><div class="card"><div class="ctitle">👤 Mis datos</div><div class="prow"><span class="prl">Nombre</span><span class="prv">${CU.nombre}</span></div><div class="prow"><span class="prl">Cédula</span><span class="prv">${CU.cedula}</span></div><div class="prow"><span class="prl">Teléfono</span><span class="prv">${CU.tel}</span></div><div class="prow"><span class="prl">Ciudad</span><span class="prv">${CU.ciudad||'—'}</span></div><div class="prow"><span class="prl">Email</span><span class="prv">${CU.email||'—'}</span></div><div class="prow"><span class="prl">Miembro desde</span><span class="prv">${CU.fechaReg||'—'}</span></div></div><div class="card"><div class="ctitle">📊 Mi historial</div><div class="prow"><span class="prl">Créditos completados</span><span class="prv" style="color:var(--gold);">${CU.creds||0}</span></div><div class="prow"><span class="prl">Puntos acumulados</span><span class="prv" style="color:var(--gold);">${CU.puntos||0}</span></div><div class="prow"><span class="prl">Nivel actual</span><span class="prv" style="color:var(--gold);">N${CU.nivel} · ${NV[CU.nivel-1].nom}</span></div><div class="prow"><span class="prl">Próximo nivel</span><span class="prv">${CU.nivel<20?'N'+(CU.nivel+1)+' · '+NV[CU.nivel].nom:'Nivel máximo'}</span></div></div><button class="btn-ghost" onclick="doLogout()" style="color:var(--red);border-color:rgba(239,68,68,.28);">Cerrar sesión</button>`;
+}
+// LUKA
+function iLuka(){LH=[];const m=document.getElementById('lukaMsgs');if(!m)return;const n=CU?.nombre?.split(' ')[0]||'';m.innerHTML=`<div class="msg bot">¡Hola ${n}! 🤖 Soy <strong>LUKA</strong>, tu asistente Lukero. ¿En qué te puedo ayudar?</div>`;LH=[{role:'user',content:'(usuario abre chat)'},{role:'assistant',content:'¡Hola '+n+'! Soy LUKA. ¿En qué te ayudo?'}];}
+function lSys(){const ca=CU?.creditoActivo;return`Eres LUKA, asistente IA de Lukero (NEXECO SAS, Colombia).\nCLIENTE: ${CU?.nombre}, N${CU?.nivel} (${NV[(CU?.nivel||1)-1]?.nom}), ${CU?.puntos||0} puntos, ${CU?.creds||0} créditos.\nCRÉDITO: ${ca&&ca.estado!=='pagado'?`$${Number(ca.capital).toLocaleString('es-CO')} · total $${Number(ca.total).toLocaleString('es-CO')} · vence ${ca.fechaVence} · ${ca.estado}`:'Sin crédito activo.'}\nMODELO: 30% total. Plazo 8 días. Prórroga +3 días (desde N2). Mora 1% diario. Descuentos: 3+ días antes=póliza+interés gratis, 2 días=póliza gratis, 1 día=50% tech, día de pago mañana=40% tech. 20 niveles hasta $10M. Mínimo 3 créditos por nivel.\nTONO: Español colombiano informal, empático, max 3-4 oraciones.`;}
+function lQ(q){document.getElementById('lukaIn').value=q;lS();}
+async function lS(){const inp=document.getElementById('lukaIn');const msg=inp.value.trim();if(!msg)return;inp.value='';const m=document.getElementById('lukaMsgs');m.innerHTML+=`<div class="msg user">${msg}</div>`;LH.push({role:'user',content:msg});document.getElementById('lukaQs').style.display='none';const tid='lt_'+Date.now();m.innerHTML+=`<div class="msg bot" id="${tid}"><div class="typing"><span></span><span></span><span></span></div></div>`;m.scrollTop=m.scrollHeight;try{const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:700,system:lSys(),messages:LH.slice(-8)})});const d=await r.json();const rep=d.content?.find(b=>b.type==='text')?.text||'Error de conexión.';LH.push({role:'assistant',content:rep});const el=document.getElementById(tid);if(el)el.innerHTML=rep.replace(/\n/g,'<br>');}catch{const el=document.getElementById(tid);if(el)el.textContent='Error de conexión.';}m.scrollTop=m.scrollHeight;}
+// FINN
+function iFinn(){FH=[];const m=document.getElementById('finnMsgs');if(!m)return;const n=CU?.nombre?.split(' ')[0]||'';m.innerHTML=`<div class="msg bot" style="border-color:rgba(59,130,246,.25);">¡Hola ${n}! 🧠 Soy <strong>Finn</strong>, tu asesor financiero independiente. No te vendo nada — solo consejos honestos para mejorar tu salud financiera.</div>`;FH=[{role:'user',content:'(usuario abre asesor)'},{role:'assistant',content:'Hola '+n+'! Soy Finn. ¿En qué te ayudo?'}];}
+function fSys(){return`Eres FINN, asesor financiero personal independiente de Lukero (Colombia).\nCLIENTE: ${CU?.nombre}, N${CU?.nivel} Lukero, ${CU?.creds||0} créditos.\nROL: Consejos financieros honestos y prácticos para colombianos. Ahorro, deudas, Datacrédito, emergencias. NO presionar a tomar créditos. SÍ mencionar que pagar anticipado en Lukero da descuentos y sube nivel. Citar leyes colombianas cuando aplique.\nTONO: Español colombiano informal, empático, directo, max 4 oraciones.`;}
+function fQ(q){document.getElementById('finnIn').value=q;fS();}
+async function fS(){const inp=document.getElementById('finnIn');const msg=inp.value.trim();if(!msg)return;inp.value='';const m=document.getElementById('finnMsgs');m.innerHTML+=`<div class="msg user">${msg}</div>`;FH.push({role:'user',content:msg});document.getElementById('finnQs').style.display='none';const tid='ft_'+Date.now();m.innerHTML+=`<div class="msg bot" id="${tid}" style="border-color:rgba(59,130,246,.22);"><div class="typing"><span></span><span></span><span></span></div></div>`;m.scrollTop=m.scrollHeight;try{const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:700,system:fSys(),messages:FH.slice(-8)})});const d=await r.json();const rep=d.content?.find(b=>b.type==='text')?.text||'Error de conexión.';FH.push({role:'assistant',content:rep});const el=document.getElementById(tid);if(el)el.innerHTML=rep.replace(/\n/g,'<br>');}catch{const el=document.getElementById(tid);if(el)el.textContent='Error de conexión.';}m.scrollTop=m.scrollHeight;}
+// REDES
+function clSoc(red,pts,btn){if(!CU)return;if(!CU.sc)CU.sc={};if(CU.sc[red]){toast('Ya reclamaste esta red 👍');return;}CU.puntos=(CU.puntos||0)+pts;CU.sc[red]=true;svU();toast('+'+pts+' puntos ganados! 🎉');btn.textContent='✓ Listo';btn.style.color='var(--green)';btn.style.borderColor='var(--green)';}
+// WA
+function openWA(){const n=CU?.nombre?.split(' ')[0]||'cliente';window.open('https://wa.me/573000000000?text='+encodeURIComponent('Hola Lukero! Soy '+n+' y necesito ayuda.'),'_blank');}
+// T&C
+function tcH(){return`<h3>1. PARTES</h3><p>Contrato entre <strong>NEXECO SAS</strong> ("Lukero"), empresa domiciliada en Bogotá D.C., y el <strong>USUARIO</strong>, persona natural mayor de 18 años.</p><h3>2. NATURALEZA DEL SERVICIO</h3><p>Lukero es una plataforma de tecnología financiera de originación de crédito con recursos propios. No es entidad vigilada por la SFC. Opera bajo el Código de Comercio y la Ley 1480 de 2011.</p><h3>3. CONDICIONES DEL CRÉDITO</h3><p>3.1. Plazo base: <strong>8 días calendario</strong>.<br>3.2. Costo total: <strong>30%</strong> sobre el capital (gastos admin, tecnológicos, IVA 19%, interés 24% E.A., póliza de riesgo).<br>3.3. <strong>Prórroga:</strong> +3 días, disponible desde N2, máximo 2 por crédito.<br>3.4. <strong>Mora:</strong> 1% diario sobre el capital desde el día siguiente al vencimiento.</p><h3>4. DESCUENTOS POR PAGO ANTICIPADO</h3><p>4.1. 3+ días antes: exención de póliza e intereses.<br>4.2. 2 días antes: exención de póliza.<br>4.3. 1 día antes: 50% desc. gastos tecnológicos.<br>4.4. Día de pago antes 12pm: 40% desc. gastos tecnológicos.</p><h3>5. SISTEMA DE NIVELES</h3><p>20 niveles. N1-N10 visibles, N11-N20 se desbloquean al completar N10. Mínimo 3 créditos por nivel para avanzar. Puntos acumulables por pagos anticipados, referidos y redes sociales.</p><h3>6. OBLIGACIONES DEL USUARIO</h3><p>6.1. Información verídica en KYC.<br>6.2. Pagar en el plazo acordado.<br>6.3. No ceder ni compartir la cuenta.</p><h3>7. DATOS PERSONALES — LEY 1581 DE 2012</h3><p>NEXECO SAS trata datos para: verificación de identidad, gestión del crédito, prevención de fraude. Derechos: acceso, corrección, supresión escribiendo a privacidad@lukero.co. Los datos no se venden a terceros.</p><h3>8. HABEAS DATA FINANCIERO — LEY 1266 DE 2008</h3><p>El usuario autoriza a NEXECO SAS a consultar y reportar ante Datacrédito y TransUnion.</p><h3>9. VERIFICACIÓN KYC</h3><p>Requiere: foto de cédula, selfie con cédula, verificación celular y correo por OTP.</p><h3>10. LEY APLICABLE</h3><p>Leyes de Colombia. Controversias: jueces de Bogotá D.C.</p><p style="margin-top:12px;font-size:11px;color:var(--text3);">Versión 1.0 · Junio 2026 · NEXECO SAS · Bogotá D.C.</p>`;}
+// UTILS
+function cpTxt(t,l){navigator.clipboard.writeText(t).then(()=>toast((l||t)+' copiado ✓')).catch(()=>toast('Copiado ✓'));}
+function toast(msg,type=''){const t=document.getElementById('toast');t.textContent=msg;t.className='on'+(type==='err'?' err':'');setTimeout(()=>t.className='',3000);}
+</script>
+</body>
+</html>

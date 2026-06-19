@@ -1,0 +1,13 @@
+.no-cred { text-align:center; padding:48px 20px; }
+.cred-card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:20px; margin-bottom:12px; }
+.cred-lbl { font-size:11px; color:var(--text2); text-transform:uppercase; letter-spacing:.6px; }
+.cred-val { font-family:'Syne',sans-serif; font-size:28px; font-weight:700; margin-top:2px; }
+.cred-val.total { color:var(--gold); }
+.cred-row { display:flex; justify-content:space-between; align-items:center; margin-top:14px; }
+.cred-date { font-family:'Syne',sans-serif; font-size:16px; font-weight:700; color:var(--orange); }
+.est-badge { font-size:11px; font-weight:700; padding:4px 12px; border-radius:20px; text-transform:uppercase; }
+.est-badge.activo { background:rgba(59,130,246,.15); color:var(--blue); }
+.est-badge.mora { background:rgba(239,68,68,.15); color:var(--red); }
+.cred-info { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px; margin-bottom:12px; }
+.desc-row { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--border); }
+.desc-row:last-child { border-bottom:none; }

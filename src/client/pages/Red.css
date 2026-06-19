@@ -1,0 +1,14 @@
+.rbanner { background:linear-gradient(135deg,rgba(245,197,24,.15),rgba(249,115,22,.1)); border:1px solid rgba(245,197,24,.2); border-radius:14px; padding:16px; margin-bottom:12px; text-align:center; }
+.rbpts { font-family:'Bebas Neue',sans-serif; font-size:36px; letter-spacing:3px; color:var(--gold); }
+.socc { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:13px 14px; margin-bottom:8px; display:flex; align-items:center; gap:11px; }
+.socico { font-size:24px; }
+.socn { font-size:14px; font-weight:600; }
+.soch { font-size:11px; color:var(--text2); }
+.socr { font-size:11px; color:var(--gold); margin-top:2px; font-weight:600; }
+.socbtn { margin-left:auto; padding:7px 14px; border:1px solid var(--gold); border-radius:20px; background:transparent; color:var(--gold); font-size:12px; cursor:pointer; font-family:'Outfit',sans-serif; transition:all .2s; white-space:nowrap; }
+.socbtn:active { background:var(--gold); color:#000; }
+.socbtn.done { border-color:var(--green); color:var(--green); }
+.ref-box { background:var(--bg2); border-radius:9px; padding:11px; display:flex; justify-content:space-between; align-items:center; }
+.ref-cod { font-family:'Syne',sans-serif; font-weight:700; font-size:15px; color:var(--gold); letter-spacing:2px; }
+.cpbtn { padding:5px 12px; background:transparent; border:1px solid var(--border); border-radius:6px; color:var(--text2); font-size:12px; cursor:pointer; font-family:'Outfit',sans-serif; transition:all .2s; }
+.cpbtn:active { border-color:var(--gold); color:var(--gold); }

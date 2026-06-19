@@ -1,0 +1,19 @@
+.sidebar { width:220px; background:var(--bg2); border-right:1px solid var(--border); display:flex; flex-direction:column; position:fixed; top:0; left:0; height:100vh; z-index:100; }
+.sidebar-logo { padding:24px 20px 20px; border-bottom:1px solid var(--border); }
+.sidebar-logo .name { font-family:'Syne',sans-serif; font-weight:800; font-size:20px; color:var(--gold); }
+.sidebar-logo .sub { font-size:11px; color:var(--text3); margin-top:2px; }
+.sidebar-user { padding:14px 20px; border-bottom:1px solid var(--border); }
+.role-badge { display:inline-block; padding:3px 10px; border-radius:20px; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.6px; }
+.role-owner { background:rgba(240,180,41,.15); color:var(--gold); }
+.role-admin { background:rgba(79,142,247,.15); color:var(--blue); }
+.role-asesor { background:rgba(61,214,140,.15); color:var(--green); }
+.role-ventas { background:rgba(167,139,250,.15); color:var(--purple); }
+.sidebar-nav { flex:1; padding:12px 0; overflow-y:auto; }
+.nav-section { padding:8px 20px 4px; font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:.8px; }
+.nav-item { display:flex; align-items:center; gap:10px; padding:10px 20px; cursor:pointer; color:var(--text2); font-size:13px; transition:all .15s; border-left:3px solid transparent; }
+.nav-item:hover { color:var(--text); background:rgba(255,255,255,.03); }
+.nav-item.active { color:var(--gold); background:rgba(240,180,41,.08); border-left-color:var(--gold); }
+.nav-item .icon { font-size:15px; width:20px; text-align:center; }
+.sidebar-bottom { padding:16px 20px; border-top:1px solid var(--border); }
+.btn-logout { width:100%; padding:10px; background:transparent; border:1px solid var(--border); border-radius:8px; color:var(--text2); font-size:12px; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all .2s; }
+.btn-logout:hover { border-color:var(--red); color:var(--red); }

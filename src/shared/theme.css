@@ -1,0 +1,58 @@
+/* ── BASE RESET ── */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body, #root { height: 100%; }
+body { font-family: 'Outfit', sans-serif; }
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-thumb { background: #2a2a38; border-radius: 2px; }
+
+/* ── CLIENT THEME (navy blue) ── */
+.theme-client {
+  --bg: #0b1a3b;
+  --bg2: #0f2147;
+  --bg3: #173060;
+  --card: #182d58;
+  --border: #243d72;
+  --gold: #f5c518;
+  --gold2: #ffe57a;
+  --blue: #3b82f6;
+  --blue2: #60a5fa;
+  --green: #22c55e;
+  --red: #ef4444;
+  --orange: #f97316;
+  --purple: #a78bfa;
+  --text: #eef2ff;
+  --text2: #8eaacc;
+  --text3: #3d5580;
+  --max: 480px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* ── CRM THEME (dark black) ── */
+.theme-crm {
+  --bg: #0a0a0f;
+  --bg2: #111118;
+  --bg3: #1a1a24;
+  --card: #16161f;
+  --border: #2a2a38;
+  --gold: #f0b429;
+  --gold2: #ffd166;
+  --blue: #4f8ef7;
+  --green: #3dd68c;
+  --red: #f75555;
+  --orange: #ff8c42;
+  --purple: #a78bfa;
+  --text: #e8e8f0;
+  --text2: #9090a8;
+  --text3: #5a5a70;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* ── SHARED ATOMS ── */
+.err { color: var(--red); font-size: 12px; margin-top: 7px; text-align: center; }
+.gold { color: var(--gold); }
+.green { color: var(--green); }
+.red { color: var(--red); }
+.blue { color: var(--blue); }
+.orange { color: var(--orange); }

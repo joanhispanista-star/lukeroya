@@ -1,0 +1,14 @@
+.login-screen { position:fixed; inset:0; background:var(--bg); display:flex; align-items:center; justify-content:center; z-index:9999; }
+.login-box { background:var(--card); border:1px solid var(--border); border-radius:20px; padding:48px 40px; width:360px; text-align:center; }
+.login-logo { font-family:'Syne',sans-serif; font-size:28px; font-weight:800; color:var(--gold); margin-bottom:4px; }
+.login-sub { color:var(--text2); font-size:13px; margin-bottom:32px; }
+.login-role-tabs { display:flex; gap:6px; margin-bottom:24px; background:var(--bg3); border-radius:10px; padding:4px; }
+.login-role-tabs button { flex:1; padding:8px 4px; border:none; background:transparent; color:var(--text2); border-radius:7px; cursor:pointer; font-size:11px; font-family:'DM Sans',sans-serif; transition:all .2s; }
+.login-role-tabs button.active { background:var(--gold); color:#000; font-weight:600; }
+.login-field { margin-bottom:16px; text-align:left; }
+.login-field label { font-size:11px; color:var(--text2); text-transform:uppercase; letter-spacing:.8px; display:block; margin-bottom:6px; }
+.login-field input { width:100%; padding:12px 14px; background:var(--bg3); border:1px solid var(--border); border-radius:10px; color:var(--text); font-size:14px; font-family:'DM Sans',sans-serif; outline:none; transition:border .2s; }
+.login-field input:focus { border-color:var(--gold); }
+.btn-login { width:100%; padding:14px; background:var(--gold); border:none; border-radius:10px; font-family:'Syne',sans-serif; font-weight:700; font-size:15px; color:#000; cursor:pointer; transition:opacity .2s; }
+.btn-login:hover { opacity:.85; }
+.login-err { color:var(--red); font-size:12px; margin-top:12px; }

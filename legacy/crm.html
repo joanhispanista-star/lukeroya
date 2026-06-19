@@ -1,0 +1,1638 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRM Cobranzas · Lukero</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#0a0a0f;--bg2:#111118;--bg3:#1a1a24;--card:#16161f;--border:#2a2a38;
+  --gold:#f0b429;--gold2:#ffd166;--blue:#4f8ef7;--green:#3dd68c;
+  --red:#f75555;--orange:#ff8c42;--purple:#a78bfa;
+  --text:#e8e8f0;--text2:#9090a8;--text3:#5a5a70;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+
+/* LOGIN */
+#loginScreen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;}
+.login-box{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:48px 40px;width:360px;text-align:center;}
+.login-logo{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--gold);margin-bottom:4px;}
+.login-sub{color:var(--text2);font-size:13px;margin-bottom:32px;}
+.login-role-tabs{display:flex;gap:6px;margin-bottom:24px;background:var(--bg3);border-radius:10px;padding:4px;}
+.login-role-tabs button{flex:1;padding:8px 4px;border:none;background:transparent;color:var(--text2);border-radius:7px;cursor:pointer;font-size:11px;font-family:'DM Sans',sans-serif;transition:all .2s;}
+.login-role-tabs button.active{background:var(--gold);color:#000;font-weight:600;}
+.login-field{margin-bottom:16px;text-align:left;}
+.login-field label{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:6px;}
+.login-field input{width:100%;padding:12px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border .2s;}
+.login-field input:focus{border-color:var(--gold);}
+.btn-login{width:100%;padding:14px;background:var(--gold);border:none;border-radius:10px;font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:#000;cursor:pointer;transition:opacity .2s;}
+.btn-login:hover{opacity:.85;}
+.login-err{color:var(--red);font-size:12px;margin-top:12px;}
+
+/* LAYOUT */
+.app{display:flex;min-height:100vh;}
+.sidebar{width:220px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;}
+.sidebar-logo{padding:24px 20px 20px;border-bottom:1px solid var(--border);}
+.sidebar-logo .name{font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--gold);}
+.sidebar-logo .sub{font-size:11px;color:var(--text3);margin-top:2px;}
+.sidebar-user{padding:14px 20px;border-bottom:1px solid var(--border);}
+.role-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;}
+.role-owner{background:rgba(240,180,41,.15);color:var(--gold);}
+.role-admin{background:rgba(79,142,247,.15);color:var(--blue);}
+.role-asesor{background:rgba(61,214,140,.15);color:var(--green);}
+.role-ventas{background:rgba(167,139,250,.15);color:var(--purple);}
+.sidebar-nav{flex:1;padding:12px 0;overflow-y:auto;}
+.nav-section{padding:8px 20px 4px;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;cursor:pointer;color:var(--text2);font-size:13px;transition:all .15s;border-left:3px solid transparent;}
+.nav-item:hover{color:var(--text);background:rgba(255,255,255,.03);}
+.nav-item.active{color:var(--gold);background:rgba(240,180,41,.08);border-left-color:var(--gold);}
+.nav-item .icon{font-size:15px;width:20px;text-align:center;}
+.sidebar-bottom{padding:16px 20px;border-top:1px solid var(--border);}
+.btn-logout{width:100%;padding:10px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--text2);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;}
+.btn-logout:hover{border-color:var(--red);color:var(--red);}
+.main{margin-left:220px;flex:1;padding:28px;min-height:100vh;}
+
+/* VIEWS */
+.view{display:none;}.view.active{display:block;}
+.page-header{margin-bottom:28px;}
+.page-title{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;}
+.page-sub{color:var(--text2);font-size:13px;margin-top:4px;}
+
+/* CARDS */
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:28px;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;}
+.stat-card .label{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px;}
+.stat-card .value{font-family:'Syne',sans-serif;font-size:26px;font-weight:700;}
+.stat-card .sub{font-size:12px;color:var(--text3);margin-top:4px;}
+.gold{color:var(--gold);}.green{color:var(--green);}.red{color:var(--red);}.blue{color:var(--blue);}.orange{color:var(--orange);}
+
+/* TABLE */
+.table-wrap{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+.table-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.table-title{font-family:'Syne',sans-serif;font-weight:700;font-size:15px;}
+.search-box{padding:9px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;width:220px;}
+.search-box:focus{border-color:var(--gold);}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{padding:11px 16px;text-align:left;color:var(--text3);font-size:11px;text-transform:uppercase;letter-spacing:.6px;font-weight:500;border-bottom:1px solid var(--border);}
+td{padding:12px 16px;border-bottom:1px solid rgba(42,42,56,.5);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(255,255,255,.015);}
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;}
+.badge-pendiente{background:rgba(255,140,66,.15);color:var(--orange);}
+.badge-vencido{background:rgba(247,85,85,.15);color:var(--red);}
+.badge-negociacion{background:rgba(79,142,247,.15);color:var(--blue);}
+.badge-cobrado{background:rgba(61,214,140,.15);color:var(--green);}
+.badge-lukero{background:rgba(240,180,41,.15);color:var(--gold);}
+.badge-prospecto{background:rgba(167,139,250,.15);color:var(--purple);}
+.btn-sm{padding:6px 12px;border-radius:7px;border:none;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;font-weight:500;transition:all .2s;}
+.btn-primary{background:var(--gold);color:#000;}.btn-primary:hover{opacity:.85;}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border);}.btn-ghost:hover{border-color:var(--gold);color:var(--gold);}
+.btn-icon{background:transparent;border:none;cursor:pointer;color:var(--text2);font-size:15px;padding:4px 6px;border-radius:5px;transition:all .15s;}
+.btn-icon:hover{color:var(--text);background:rgba(255,255,255,.06);}
+.action-btns{display:flex;gap:4px;}
+
+/* MODALS */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;display:flex;align-items:center;justify-content:center;padding:16px;}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:18px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;}
+.modal-header{padding:24px 24px 0;display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+.modal-title{font-family:'Syne',sans-serif;font-weight:700;font-size:18px;}
+.modal-body{padding:0 24px 24px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.field{display:flex;flex-direction:column;gap:6px;}
+.field label{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;}
+.field input,.field select,.field textarea{padding:11px 13px;background:var(--bg3);border:1px solid var(--border);border-radius:9px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;transition:border .2s;}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--gold);}
+.field select{cursor:pointer;}
+.field textarea{resize:vertical;min-height:80px;}
+.modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;}
+
+/* DETAIL PANEL */
+.detail-panel{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:20px;}
+.detail-panel h3{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:16px;color:var(--text2);}
+.info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;}
+.info-item label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:3px;}
+.info-item span{font-size:14px;font-weight:500;}
+
+/* HISTORY */
+.history-list{display:flex;flex-direction:column;gap:10px;margin-top:10px;}
+.history-item{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;}
+.history-item .hi-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.history-item .hi-type{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
+.history-item .hi-date{font-size:11px;color:var(--text3);}
+.history-item .hi-note{font-size:13px;color:var(--text);}
+.history-item .hi-author{font-size:11px;color:var(--text2);margin-top:4px;}
+.type-llamada{color:var(--blue);}.type-mensaje{color:var(--purple);}.type-pago{color:var(--green);}.type-nota{color:var(--text2);}
+
+/* TABS */
+.tabs{display:flex;gap:0;background:var(--bg3);border-radius:10px;padding:4px;margin-bottom:20px;width:fit-content;}
+.tab{padding:8px 16px;border:none;background:transparent;color:var(--text2);border-radius:7px;cursor:pointer;font-size:13px;font-family:'DM Sans',sans-serif;transition:all .2s;}
+.tab.active{background:var(--card);color:var(--text);border:1px solid var(--border);}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;gap:12px;flex-wrap:wrap;}
+.topbar-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.btn-new{padding:10px 18px;background:var(--gold);border:none;border-radius:9px;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:#000;cursor:pointer;transition:opacity .2s;}
+.btn-new:hover{opacity:.85;}
+
+/* MAP IMPROVED */
+.map-layout{display:grid;grid-template-columns:1fr 320px;gap:20px;height:580px;}
+#mapContainer{border-radius:14px;overflow:hidden;border:1px solid var(--border);height:100%;}
+.map-sidebar{display:flex;flex-direction:column;gap:12px;overflow-y:auto;}
+.map-search-wrap{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;}
+.map-search-wrap label{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:8px;}
+.map-search-input{width:100%;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;margin-bottom:8px;}
+.map-search-input:focus{border-color:var(--gold);}
+.btn-geocode{width:100%;padding:10px;background:var(--blue);border:none;border-radius:8px;color:#fff;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:opacity .2s;}
+.btn-geocode:hover{opacity:.85;}
+.map-legend{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;}
+.map-legend h4{font-size:12px;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;}
+.legend-item{display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:12px;}
+.legend-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
+.map-client-list{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;flex:1;overflow-y:auto;}
+.map-client-list h4{font-size:12px;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;}
+.map-client-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(42,42,56,.4);cursor:pointer;transition:all .15s;}
+.map-client-item:last-child{border-bottom:none;}
+.map-client-item:hover{opacity:.8;}
+.map-client-item .mci-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.map-client-item .mci-info .mci-name{font-size:13px;font-weight:500;}
+.map-client-item .mci-info .mci-addr{font-size:11px;color:var(--text3);}
+.geocode-result{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;font-size:12px;color:var(--text2);margin-top:8px;display:none;}
+
+/* CALENDAR IMPROVED */
+.cal-layout{display:grid;grid-template-columns:1fr 340px;gap:20px;}
+.cal-main{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.cal-nav-title{font-family:'Syne',sans-serif;font-weight:700;font-size:18px;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.cal-day-name{text-align:center;font-size:11px;color:var(--text3);padding:6px 0;text-transform:uppercase;letter-spacing:.5px;}
+.cal-cell{min-height:80px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:7px;cursor:pointer;transition:all .15s;position:relative;}
+.cal-cell:hover{border-color:var(--gold);background:rgba(240,180,41,.05);}
+.cal-cell.today{border-color:var(--gold);background:rgba(240,180,41,.08);}
+.cal-cell.selected{border-color:var(--blue);background:rgba(79,142,247,.1);}
+.cal-cell.other-month{opacity:.3;}
+.cal-cell .day-num{font-size:12px;font-weight:600;margin-bottom:3px;}
+.cal-cell.today .day-num{color:var(--gold);}
+.cal-event{font-size:9px;padding:2px 5px;border-radius:4px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;}
+.event-festivo{background:rgba(247,85,85,.2);color:var(--red);}
+.event-quincena{background:rgba(240,180,41,.2);color:var(--gold);}
+.event-prima{background:rgba(61,214,140,.2);color:var(--green);}
+.event-cobro{background:rgba(79,142,247,.2);color:var(--blue);}
+.event-seguimiento{background:rgba(167,139,250,.2);color:var(--purple);}
+.event-custom{background:rgba(255,140,66,.2);color:var(--orange);}
+.cal-dot-wrap{display:flex;gap:2px;flex-wrap:wrap;margin-top:2px;}
+.cal-dot{width:6px;height:6px;border-radius:50%;}
+
+/* DAY PANEL */
+.day-panel{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;position:sticky;top:20px;}
+.day-panel-date{font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--gold);margin-bottom:4px;}
+.day-panel-sub{font-size:12px;color:var(--text2);margin-bottom:16px;}
+.day-event-list{display:flex;flex-direction:column;gap:10px;max-height:420px;overflow-y:auto;}
+.day-event-item{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;}
+.dei-header{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.dei-type{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:2px 8px;border-radius:10px;}
+.dei-title{font-size:13px;font-weight:600;}
+.dei-sub{font-size:12px;color:var(--text2);margin-top:3px;}
+.dei-actions{display:flex;gap:6px;margin-top:8px;}
+.day-empty{text-align:center;padding:32px 0;color:var(--text3);font-size:13px;}
+.add-event-btn{width:100%;padding:10px;background:transparent;border:1px dashed var(--border);border-radius:9px;color:var(--text2);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:12px;transition:all .2s;}
+.add-event-btn:hover{border-color:var(--gold);color:var(--gold);}
+
+/* CLIENT SCHEDULE BADGE */
+.sch-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:600;background:rgba(79,142,247,.15);color:var(--blue);}
+
+/* FINANCIERO */
+.fin-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid rgba(42,42,56,.5);}
+.fin-row:last-child{border-bottom:none;}
+.fin-label{color:var(--text2);font-size:13px;}
+.fin-value{font-family:'Syne',sans-serif;font-weight:700;font-size:16px;}
+
+/* SYNC BANNER */
+.sync-banner{background:linear-gradient(135deg,rgba(240,180,41,.12),rgba(255,140,0,.08));border:1px solid rgba(240,180,41,.25);border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:12px;margin-bottom:20px;}
+.sync-banner .sb-count{margin-left:auto;font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--gold);}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--green);color:#000;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;z-index:9000;transform:translateY(100px);opacity:0;transition:all .3s;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.error{background:var(--red);color:#fff;}
+.toast.warn{background:var(--orange);color:#000;}
+
+/* METAS / IMPORT */
+#importDropZone:hover{border-color:var(--gold);background:rgba(240,180,41,.04);}
+.goal-bar-wrap{margin-bottom:16px;}
+.goal-bar-head{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;}
+.goal-bar-track{height:14px;background:var(--bg3);border-radius:8px;overflow:hidden;position:relative;}
+.goal-bar-fill{height:100%;border-radius:8px;transition:width .6s ease;}
+.goal-stage-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;}
+.goal-stage-card{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px;}
+.goal-stage-card .gs-label{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+.goal-stage-card .gs-pct{font-family:'Syne',sans-serif;font-weight:800;font-size:20px;}
+.goal-stage-card .gs-sub{font-size:11px;color:var(--text3);margin-top:4px;}
+.alert-item{display:flex;align-items:center;gap:12px;padding:13px;border-radius:10px;margin-bottom:8px;border:1px solid;}
+.alert-mora{background:rgba(247,85,85,.08);border-color:rgba(247,85,85,.25);}
+.alert-vencer{background:rgba(255,140,66,.08);border-color:rgba(255,140,66,.25);}
+.alert-meta{background:rgba(167,139,250,.08);border-color:rgba(167,139,250,.25);}
+.alert-icon{font-size:20px;}
+.alert-text .at-title{font-size:13px;font-weight:600;}
+.alert-text .at-sub{font-size:12px;color:var(--text2);margin-top:2px;}
+.alert-actions{margin-left:auto;display:flex;gap:6px;}
+
+/* MODAL EVENT SCHEDULE */
+.modal-event-sched{max-width:480px;}
+
+@media(max-width:1100px){
+  .map-layout,.cal-layout{grid-template-columns:1fr;}
+  .day-panel{position:static;}
+}
+@media(max-width:768px){
+  .sidebar{width:100%;height:auto;position:relative;}
+  .main{margin-left:0;}
+  .sidebar-nav{display:flex;flex-direction:row;overflow-x:auto;padding:8px;}
+  .nav-item{flex-direction:column;gap:4px;font-size:10px;padding:8px 14px;border-left:none;border-bottom:3px solid transparent;white-space:nowrap;}
+  .nav-item.active{border-bottom-color:var(--gold);border-left-color:transparent;}
+  .form-grid{grid-template-columns:1fr;}
+}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">CRM · Lukero</div>
+    <div class="login-sub">Sistema de Cobranzas</div>
+    <div class="login-role-tabs">
+      <button class="active" onclick="setLoginRole('owner')">Owner</button>
+      <button onclick="setLoginRole('admin')">Admin</button>
+      <button onclick="setLoginRole('asesor')">Asesor</button>
+      <button onclick="setLoginRole('ventas')">Ventas</button>
+    </div>
+    <div class="login-field"><label>Usuario</label><input type="text" id="loginUser" placeholder="usuario"></div>
+    <div class="login-field"><label>Contraseña</label><input type="password" id="loginPass" placeholder="••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="btn-login" onclick="doLogin()">Ingresar</button>
+    <div class="login-err" id="loginErr"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="appWrap" style="display:none;">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="name">CRM Cobranzas</div>
+      <div class="sub">+ Lukero Nanocreditos</div>
+    </div>
+    <div class="sidebar-user">
+      <span class="role-badge" id="roleBadge">owner</span>
+      <span id="userNameLabel" style="font-size:12px;color:var(--text2);margin-left:8px;"></span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">Principal</div>
+      <div class="nav-item active" onclick="showView('dashboard')" id="nav-dashboard"><span class="icon">📊</span> Dashboard</div>
+      <div class="nav-item" onclick="showView('clientes')" id="nav-clientes"><span class="icon">👥</span> Clientes</div>
+      <div class="nav-item" onclick="showView('lukero')" id="nav-lukero"><span class="icon">⚡</span> Lukero</div>
+      <div class="nav-item" onclick="showView('prospectos')" id="nav-prospectos"><span class="icon">🎯</span> Prospectos</div>
+      <div class="nav-item" onclick="showView('importar')" id="nav-importar"><span class="icon">📥</span> Importar</div>
+      <div class="nav-item" onclick="showView('metas')" id="nav-metas"><span class="icon">🎯</span> Metas y Alertas</div>
+      <div class="nav-section">Herramientas</div>
+      <div class="nav-item" onclick="showView('mapa')" id="nav-mapa"><span class="icon">🗺️</span> Mapa</div>
+      <div class="nav-item" onclick="showView('calendario')" id="nav-calendario"><span class="icon">📅</span> Calendario</div>
+      <div class="nav-item" onclick="showView('financiero')" id="nav-financiero"><span class="icon">💰</span> Financiero</div>
+    </nav>
+    <div class="sidebar-bottom">
+      <button class="btn-logout" onclick="doLogout()">Cerrar sesión</button>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <!-- DASHBOARD -->
+    <div class="view active" id="view-dashboard">
+      <div class="page-header">
+        <div class="page-title">Dashboard</div>
+        <div class="page-sub" id="dashDate"></div>
+      </div>
+      <div class="cards-grid" id="dashCards"></div>
+      <div class="sync-banner">
+        <span style="font-size:20px;">⚡</span>
+        <div><div style="font-weight:600;font-size:14px;color:var(--gold);">Clientes Lukero activos</div><div style="font-size:12px;color:var(--text2);">Solicitudes recibidas desde la app</div></div>
+        <div class="sb-count" id="lukeroActiveCount">0</div>
+      </div>
+      <div id="dashTodayPanel" style="margin-bottom:20px;"></div>
+      <div class="table-wrap">
+        <div class="table-head"><span class="table-title">Créditos recientes</span></div>
+        <table><thead><tr><th>Cliente</th><th>Capital</th><th>Estado</th><th>Asesor</th><th>Fecha</th></tr></thead>
+        <tbody id="recentBody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- CLIENTES -->
+    <div class="view" id="view-clientes">
+      <div class="topbar">
+        <div class="page-header" style="margin:0"><div class="page-title">Clientes</div><div class="page-sub">Gestión de cartera activa</div></div>
+        <div class="topbar-actions">
+          <input class="search-box" placeholder="Buscar cliente..." id="clientSearch" oninput="renderClientes()">
+          <button class="btn-new" onclick="openClienteModal()">+ Nuevo</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table><thead><tr><th>Nombre</th><th>Cédula</th><th>Dirección</th><th>Capital</th><th>Total</th><th>Estado</th><th>Próx. cobro</th><th></th></tr></thead>
+        <tbody id="clientesBody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- LUKERO -->
+    <div class="view" id="view-lukero">
+      <div class="topbar">
+        <div class="page-header" style="margin:0"><div class="page-title">⚡ Módulo Lukero</div><div class="page-sub">Clientes de nanocreditos</div></div>
+        <div class="topbar-actions">
+          <input class="search-box" placeholder="Buscar..." id="lukeroSearch" oninput="renderLukero()">
+          <button class="btn-new" onclick="openLukeroModal()">+ Registro manual</button>
+        </div>
+      </div>
+      <div class="cards-grid" id="lukeroCards"></div>
+      <div class="table-wrap">
+        <table><thead><tr><th>Cliente</th><th>Nivel</th><th>Puntos</th><th>Capital</th><th>Vence</th><th>Estado</th><th></th></tr></thead>
+        <tbody id="lukeroBody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- PROSPECTOS -->
+    <div class="view" id="view-prospectos">
+      <div class="topbar">
+        <div class="page-header" style="margin:0"><div class="page-title">Prospectos</div></div>
+        <div class="topbar-actions"><button class="btn-new" onclick="openProspectoModal()">+ Nuevo</button></div>
+      </div>
+      <div class="table-wrap">
+        <table><thead><tr><th>Nombre</th><th>Teléfono</th><th>Interés</th><th>Fuente</th><th>Fecha</th><th></th></tr></thead>
+        <tbody id="prospectosBody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- IMPORTAR -->
+    <div class="view" id="view-importar">
+      <div class="page-header">
+        <div class="page-title">📥 Importar Prospectos</div>
+        <div class="page-sub">Sube un archivo Excel o CSV con datos de posibles clientes</div>
+      </div>
+      <div class="detail-panel">
+        <h3>Formato esperado del archivo</h3>
+        <div class="table-wrap" style="margin-bottom:16px;">
+          <table>
+            <thead><tr><th>Columna</th><th>Ejemplo</th><th>Obligatorio</th></tr></thead>
+            <tbody>
+              <tr><td><strong>nombre</strong></td><td>María Fernández</td><td><span class="badge badge-vencido">Sí</span></td></tr>
+              <tr><td><strong>cedula</strong></td><td>1020304050</td><td><span class="badge badge-vencido">Sí</span></td></tr>
+              <tr><td><strong>telefono</strong></td><td>3001234567</td><td><span class="badge badge-vencido">Sí</span></td></tr>
+              <tr><td><strong>ciudad</strong></td><td>Bogotá</td><td><span class="badge badge-cobrado">No</span></td></tr>
+              <tr><td><strong>barrio</strong></td><td>Chapinero</td><td><span class="badge badge-cobrado">No</span></td></tr>
+              <tr><td><strong>direccion</strong></td><td>Cra 7 #45-20</td><td><span class="badge badge-cobrado">No</span></td></tr>
+              <tr><td><strong>monto_interes</strong></td><td>300000</td><td><span class="badge badge-cobrado">No</span></td></tr>
+              <tr><td><strong>fuente</strong></td><td>Referido / Redes / Base fría</td><td><span class="badge badge-cobrado">No</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <button class="btn-sm btn-ghost" onclick="descargarPlantilla()">📄 Descargar plantilla Excel de ejemplo</button>
+      </div>
+      <div class="detail-panel">
+        <h3>Subir archivo</h3>
+        <input type="file" id="importFileInput" accept=".xlsx,.xls,.csv" style="display:none;" onchange="handleFileImport(event)">
+        <div id="importDropZone" onclick="document.getElementById('importFileInput').click()" style="border:2px dashed var(--border);border-radius:14px;padding:40px;text-align:center;cursor:pointer;transition:all .2s;">
+          <div style="font-size:36px;margin-bottom:10px;">📁</div>
+          <div style="font-size:14px;font-weight:600;margin-bottom:4px;">Haz clic para seleccionar archivo</div>
+          <div style="font-size:12px;color:var(--text2);">Formatos: .xlsx, .xls, .csv</div>
+        </div>
+        <div id="importStatus" style="margin-top:14px;"></div>
+      </div>
+      <div class="table-wrap" id="importPreviewWrap" style="display:none;">
+        <div class="table-head"><span class="table-title">Vista previa de importación</span><button class="btn-new" onclick="confirmarImportacion()">Confirmar e importar</button></div>
+        <table><thead><tr><th>Nombre</th><th>Cédula</th><th>Teléfono</th><th>Ciudad</th><th>Interés</th><th>Fuente</th></tr></thead>
+        <tbody id="importPreviewBody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- METAS Y ALERTAS -->
+    <div class="view" id="view-metas">
+      <div class="page-header">
+        <div class="page-title">🎯 Metas de Recaudo y Alertas</div>
+        <div class="page-sub">Modelo de negocio: 20% anticipado · 40% día de pago · 10% día 1 mora · 10% hasta día 10 mora</div>
+      </div>
+
+      <div class="cards-grid" id="metasCards"></div>
+
+      <div class="detail-panel">
+        <h3>Progreso de meta de recaudo (cartera vigente este mes)</h3>
+        <div id="metaProgressWrap"></div>
+      </div>
+
+      <div class="detail-panel">
+        <h3>📊 Distribución esperada vs real (por etapa de pago)</h3>
+        <div id="metaDistribucion"></div>
+      </div>
+
+      <div class="detail-panel">
+        <h3>🚨 Alertas activas</h3>
+        <div id="alertasList"></div>
+      </div>
+    </div>
+
+
+    <div class="view" id="view-mapa">
+      <div class="page-header">
+        <div class="page-title">Mapa de Cartera</div>
+        <div class="page-sub">Ubica clientes por dirección, barrio o ciudad · Haz clic en un marcador para ver el cliente</div>
+      </div>
+      <div class="map-layout">
+        <div id="mapContainer"></div>
+        <div class="map-sidebar">
+          <!-- BUSCAR DIRECCIÓN -->
+          <div class="map-search-wrap">
+            <label>Buscar dirección / cliente</label>
+            <input class="map-search-input" id="mapSearchInput" placeholder="Ej: Cra 7 #45-20, Chapinero, Bogotá">
+            <button class="btn-geocode" onclick="geocodeAddress()">📍 Ubicar en el mapa</button>
+            <div class="geocode-result" id="geocodeResult"></div>
+          </div>
+          <!-- LEYENDA -->
+          <div class="map-legend">
+            <h4>Estado del crédito</h4>
+            <div class="legend-item"><div class="legend-dot" style="background:#ff8c42;"></div><span>Pendiente</span></div>
+            <div class="legend-item"><div class="legend-dot" style="background:#f75555;"></div><span>Vencido</span></div>
+            <div class="legend-item"><div class="legend-dot" style="background:#4f8ef7;"></div><span>Negociación</span></div>
+            <div class="legend-item"><div class="legend-dot" style="background:#3dd68c;"></div><span>Cobrado</span></div>
+            <div class="legend-item"><div class="legend-dot" style="background:#f0b429;border:2px solid #000;"></div><span>Lukero</span></div>
+          </div>
+          <!-- LISTA CLIENTES EN MAPA -->
+          <div class="map-client-list">
+            <h4>Clientes ubicados</h4>
+            <div id="mapClientList"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CALENDARIO MEJORADO -->
+    <div class="view" id="view-calendario">
+      <div class="page-header">
+        <div class="page-title">Calendario de Cobros</div>
+        <div class="page-sub">Festivos Colombia · Quincenas · Cobros programados · Seguimientos</div>
+      </div>
+      <div class="cal-layout">
+        <!-- CALENDARIO -->
+        <div class="cal-main">
+          <div class="cal-nav">
+            <button class="btn-sm btn-ghost" onclick="calPrev()">‹ Anterior</button>
+            <span class="cal-nav-title" id="calTitle"></span>
+            <button class="btn-sm btn-ghost" onclick="calNext()">Siguiente ›</button>
+          </div>
+          <div class="cal-grid" id="calGrid"></div>
+          <div style="display:flex;gap:12px;margin-top:14px;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2);"><div style="width:10px;height:10px;border-radius:2px;background:rgba(247,85,85,.3);"></div>Festivo</div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2);"><div style="width:10px;height:10px;border-radius:2px;background:rgba(240,180,41,.3);"></div>Quincena</div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2);"><div style="width:10px;height:10px;border-radius:2px;background:rgba(79,142,247,.3);"></div>Cobro</div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2);"><div style="width:10px;height:10px;border-radius:2px;background:rgba(167,139,250,.3);"></div>Seguimiento</div>
+          </div>
+        </div>
+        <!-- PANEL DEL DÍA -->
+        <div class="day-panel" id="dayPanel">
+          <div class="day-panel-date" id="dayPanelDate">Hoy</div>
+          <div class="day-panel-sub" id="dayPanelSub">Selecciona un día para ver detalles</div>
+          <div class="day-event-list" id="dayEventList"></div>
+          <button class="add-event-btn" onclick="openEventModal()" id="addEventBtn">+ Agregar evento / recordatorio</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- FINANCIERO -->
+    <div class="view" id="view-financiero">
+      <div class="page-header"><div class="page-title">Resumen Financiero</div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+        <div class="detail-panel"><h3>Cartera Tradicional</h3><div id="finTradicional"></div></div>
+        <div class="detail-panel"><h3>⚡ Cartera Lukero</h3><div id="finLukero"></div></div>
+      </div>
+      <div class="detail-panel" style="margin-top:20px;"><h3>Consolidado Total</h3><div id="finTotal"></div></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- MODAL CLIENTE (con campos de dirección) -->
+<div class="modal-overlay" id="modalCliente" style="display:none;">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalClienteTitle">Nuevo Cliente</div>
+      <button class="btn-icon" onclick="closeModal('modalCliente')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('tabInfo','modalCliente')">Info</button>
+        <button class="tab" onclick="switchTab('tabCredito','modalCliente')">Crédito</button>
+        <button class="tab" onclick="switchTab('tabContacto','modalCliente')">Contacto</button>
+        <button class="tab" onclick="switchTab('tabUbicacion','modalCliente')">Ubicación</button>
+      </div>
+      <div id="tabInfo">
+        <div class="form-grid">
+          <div class="field"><label>Nombre completo</label><input id="cNombre" placeholder="Nombre Apellido"></div>
+          <div class="field"><label>Cédula / NIT</label><input id="cCedula" placeholder="123456789"></div>
+          <div class="field"><label>Asesor asignado</label><select id="cAsesor"><option value="">Sin asignar</option></select></div>
+          <div class="field"><label>Estado</label>
+            <select id="cEstado"><option value="pendiente">Pendiente</option><option value="vencido">Vencido</option><option value="negociacion">Negociación</option><option value="cobrado">Cobrado</option></select>
+          </div>
+        </div>
+      </div>
+      <div id="tabCredito" style="display:none;">
+        <div class="form-grid">
+          <div class="field"><label>Capital ($)</label><input type="number" id="cCapital" placeholder="500000"></div>
+          <div class="field"><label>Interés mensual (%)</label><input type="number" id="cInteres" placeholder="10"></div>
+          <div class="field"><label>Plazo (meses)</label><input type="number" id="cPlazo" placeholder="3"></div>
+          <div class="field"><label>Fecha inicio</label><input type="date" id="cFechaInicio"></div>
+          <div class="field"><label>Fecha próximo cobro</label><input type="date" id="cFechaCobro"></div>
+          <div class="field"><label>Frecuencia cobro</label>
+            <select id="cFrecuencia"><option value="mensual">Mensual</option><option value="quincenal">Quincenal</option><option value="semanal">Semanal</option></select>
+          </div>
+        </div>
+      </div>
+      <div id="tabContacto" style="display:none;">
+        <div class="form-grid">
+          <div class="field"><label>Teléfono</label><input id="cTel" placeholder="+57 300..."></div>
+          <div class="field"><label>WhatsApp</label><input id="cWA" placeholder="+57 300..."></div>
+          <div class="field"><label>Email</label><input id="cEmail" type="email"></div>
+          <div class="field"><label>Instagram</label><input id="cIG" placeholder="@usuario"></div>
+        </div>
+      </div>
+      <div id="tabUbicacion" style="display:none;">
+        <div class="form-grid">
+          <div class="field"><label>Dirección</label><input id="cDireccion" placeholder="Cra 7 #45-20"></div>
+          <div class="field"><label>Barrio</label><input id="cBarrio" placeholder="Chapinero"></div>
+          <div class="field"><label>Ciudad</label><input id="cCiudad" placeholder="Bogotá"></div>
+          <div class="field"><label>Departamento</label><input id="cDepto" placeholder="Cundinamarca"></div>
+        </div>
+        <button class="btn-geocode" style="margin-top:14px;" onclick="geocodeClienteFromModal()">📍 Ubicar en el mapa automáticamente</button>
+        <div style="font-size:11px;color:var(--text2);margin-top:8px;" id="geoStatusModal"></div>
+        <div id="miniMapWrap" style="height:200px;border-radius:10px;overflow:hidden;margin-top:12px;border:1px solid var(--border);display:none;"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-sm btn-ghost" onclick="closeModal('modalCliente')">Cancelar</button>
+        <button class="btn-sm btn-primary" onclick="saveCliente()">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EVENTO CALENDARIO -->
+<div class="modal-overlay" id="modalEvento" style="display:none;">
+  <div class="modal modal-event-sched">
+    <div class="modal-header">
+      <div class="modal-title">Nuevo Evento / Recordatorio</div>
+      <button class="btn-icon" onclick="closeModal('modalEvento')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="field"><label>Fecha</label><input type="date" id="evFecha"></div>
+        <div class="field"><label>Hora (opcional)</label><input type="time" id="evHora"></div>
+        <div class="field"><label>Tipo</label>
+          <select id="evTipo">
+            <option value="cobro">💰 Cobro</option>
+            <option value="seguimiento">📞 Seguimiento</option>
+            <option value="custom">📌 Recordatorio</option>
+          </select>
+        </div>
+        <div class="field"><label>Cliente relacionado</label>
+          <select id="evCliente"><option value="">Sin cliente</option></select>
+        </div>
+      </div>
+      <div class="field" style="margin-top:14px;"><label>Descripción</label><input id="evTitulo" placeholder="Ej: Llamar para cobro de cuota 2"></div>
+      <div class="modal-footer">
+        <button class="btn-sm btn-ghost" onclick="closeModal('modalEvento')">Cancelar</button>
+        <button class="btn-sm btn-primary" onclick="saveEvento()">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL LUKERO -->
+<div class="modal-overlay" id="modalLukero" style="display:none;">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Registro Lukero Manual</div><button class="btn-icon" onclick="closeModal('modalLukero')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="field"><label>Nombre</label><input id="lkNombre"></div>
+        <div class="field"><label>Cédula</label><input id="lkCedula"></div>
+        <div class="field"><label>Teléfono</label><input id="lkTel"></div>
+        <div class="field"><label>Nivel</label><select id="lkNivel"><option value="1">N1</option><option value="2">N2</option><option value="3">N3</option><option value="4">N4</option><option value="5">N5</option></select></div>
+        <div class="field"><label>Capital activo ($)</label><input type="number" id="lkCapital"></div>
+        <div class="field"><label>Estado</label><select id="lkEstado"><option value="activo">Activo</option><option value="vencido">Vencido</option><option value="pagado">Pagado</option><option value="prorroga">Prórroga</option></select></div>
+        <div class="field"><label>Fecha desembolso</label><input type="date" id="lkFecha"></div>
+        <div class="field"><label>Asesor</label><select id="lkAsesor"><option value="">Sin asignar</option></select></div>
+      </div>
+      <div class="modal-footer"><button class="btn-sm btn-ghost" onclick="closeModal('modalLukero')">Cancelar</button><button class="btn-sm btn-primary" onclick="saveLukeroCliente()">Guardar</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PROSPECTO -->
+<div class="modal-overlay" id="modalProspecto" style="display:none;">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-header"><div class="modal-title">Nuevo Prospecto</div><button class="btn-icon" onclick="closeModal('modalProspecto')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="field"><label>Nombre</label><input id="pNombre"></div>
+        <div class="field"><label>Teléfono</label><input id="pTel"></div>
+        <div class="field"><label>Interés estimado ($)</label><input type="number" id="pInteres"></div>
+        <div class="field"><label>Fuente</label><select id="pFuente"><option>Referido</option><option>Redes sociales</option><option>Lukero</option><option>Llamada</option><option>Otro</option></select></div>
+      </div>
+      <div class="modal-footer"><button class="btn-sm btn-ghost" onclick="closeModal('modalProspecto')">Cancelar</button><button class="btn-sm btn-primary" onclick="saveProspecto()">Guardar</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETALLE -->
+<div class="modal-overlay" id="modalDetalle" style="display:none;">
+  <div class="modal" style="max-width:680px;">
+    <div class="modal-header"><div class="modal-title" id="detalleNombre">—</div><button class="btn-icon" onclick="closeModal('modalDetalle')">✕</button></div>
+    <div class="modal-body" id="detalleBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ===================== CONSTANTS =====================
+const KEYS={clientes:'crm_clientes',lukero:'crm_lukero',prospectos:'crm_prospectos',asesores:'crm_asesores',eventos:'crm_eventos',lukeroSync:'lukero_solicitudes'};
+const CREDS={owner:{user:'owner',pass:'owner123',name:'Owner'},admin:{user:'admin',pass:'admin123',name:'Administrador'},asesor:{user:'asesor1',pass:'asesor123',name:'Asesor 1'},ventas:{user:'ventas1',pass:'ventas123',name:'Ventas 1'}};
+const COLORS_MAP={pendiente:'#ff8c42',vencido:'#f75555',negociacion:'#4f8ef7',cobrado:'#3dd68c'};
+
+let currentRole='owner', currentUser='Owner', editingClienteId=null;
+let calYear, calMonth, selectedCalDate=null;
+let mapInstance=null, mapInited=false, miniMap=null;
+let pendingGeoLat=null, pendingGeoLng=null;
+
+function load(k){try{return JSON.parse(localStorage.getItem(k)||'[]');}catch{return[];}}
+function save(k,d){localStorage.setItem(k,JSON.stringify(d));}
+
+// ===================== LOGIN =====================
+let loginRole='owner';
+function setLoginRole(r){
+  loginRole=r;
+  document.querySelectorAll('.login-role-tabs button').forEach((b,i)=>b.classList.toggle('active',['owner','admin','asesor','ventas'][i]===r));
+}
+function doLogin(){
+  const u=document.getElementById('loginUser').value.trim();
+  const p=document.getElementById('loginPass').value;
+  const cred=CREDS[loginRole];
+  if(cred&&u===cred.user&&p===cred.pass){
+    currentRole=loginRole; currentUser=cred.name;
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('appWrap').style.display='flex';
+    document.getElementById('roleBadge').className='role-badge role-'+loginRole;
+    document.getElementById('roleBadge').textContent=loginRole;
+    document.getElementById('userNameLabel').textContent=currentUser;
+    initApp();
+  } else {
+    document.getElementById('loginErr').textContent='Usuario o contraseña incorrectos';
+  }
+}
+function doLogout(){
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('appWrap').style.display='none';
+  document.getElementById('loginUser').value='';
+  document.getElementById('loginPass').value='';
+}
+
+// ===================== NAV =====================
+function showView(v){
+  document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  const nav=document.getElementById('nav-'+v);
+  if(nav)nav.classList.add('active');
+  if(v==='mapa')setTimeout(initMap,100);
+  if(v==='calendario')renderCalendar();
+  if(v==='clientes')renderClientes();
+  if(v==='lukero')renderLukero();
+  if(v==='prospectos')renderProspectos();
+  if(v==='financiero')renderFinanciero();
+  if(v==='dashboard')renderDashboard();
+  if(v==='metas')renderMetas();
+  if(v==='importar'){/* static, no render needed on load */}
+}
+
+// ===================== INIT =====================
+function initApp(){
+  seedDemoData();
+  syncLukeroSolicitudes();
+  populateAsesorSelects();
+  applyRolePermissions();
+  const now=new Date();
+  calYear=now.getFullYear(); calMonth=now.getMonth();
+  document.getElementById('dashDate').textContent=now.toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  renderDashboard();
+  setInterval(syncLukeroSolicitudes,30000);
+}
+
+function applyRolePermissions(){
+  // Ventas role: only sees Importar, Prospectos, and limited dashboard
+  const ventasOnly=['nav-importar','nav-prospectos','nav-dashboard'];
+  const allNavIds=['nav-dashboard','nav-clientes','nav-lukero','nav-prospectos','nav-importar','nav-metas','nav-mapa','nav-calendario','nav-financiero'];
+  if(currentRole==='ventas'){
+    allNavIds.forEach(id=>{
+      const el=document.getElementById(id);
+      if(el)el.style.display=ventasOnly.includes(id)?'flex':'none';
+    });
+    showView('importar');
+  } else {
+    allNavIds.forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='flex';});
+  }
+}
+
+function seedDemoData(){
+  if(load(KEYS.clientes).length>0)return;
+  const today=new Date();
+  const addDays=(d)=>new Date(today.getTime()+d*86400000).toISOString().slice(0,10);
+  const clientes=[
+    {id:'c1',nombre:'María Fernández',cedula:'1020304050',direccion:'Cra 13 #45-30',barrio:'Chapinero',ciudad:'Bogotá',depto:'Cundinamarca',capital:1500000,interes:8,plazo:3,estado:'pendiente',asesor:'asesor1',tel:'+57 300 123 4567',wa:'+57 300 123 4567',fechaInicio:addDays(-20),fechaCobro:addDays(2),frecuencia:'mensual',lat:4.6472,lng:-74.0647,historial:[]},
+    {id:'c2',nombre:'Carlos Rincón',cedula:'1923456789',direccion:'Cll 80 #12-55',barrio:'Barrios Unidos',ciudad:'Bogotá',depto:'Cundinamarca',capital:800000,interes:10,plazo:2,estado:'vencido',asesor:'asesor1',tel:'+57 311 222 3344',wa:'',fechaInicio:addDays(-40),fechaCobro:addDays(-5),frecuencia:'mensual',lat:4.6700,lng:-74.0780,historial:[]},
+    {id:'c3',nombre:'Ana Gómez',cedula:'4523198710',direccion:'Av El Poblado #5-100',barrio:'El Poblado',ciudad:'Medellín',depto:'Antioquia',capital:2000000,interes:7,plazo:6,estado:'negociacion',asesor:'',tel:'+57 315 777 8899',wa:'+57 315 777 8899',fechaInicio:addDays(-60),fechaCobro:addDays(10),frecuencia:'mensual',lat:6.2095,lng:-75.5688,historial:[]},
+    {id:'c4',nombre:'Luis Torres',cedula:'7890123456',direccion:'Cll 5 #38-25',barrio:'San Fernando',ciudad:'Cali',depto:'Valle',capital:600000,interes:12,plazo:1,estado:'cobrado',asesor:'asesor1',tel:'+57 320 444 5566',wa:'',fechaInicio:addDays(-30),fechaCobro:addDays(30),frecuencia:'mensual',lat:3.4516,lng:-76.5320,historial:[]},
+    {id:'c5',nombre:'Sandra Morales',cedula:'5512398760',direccion:'Cll 45 #20-15',barrio:'La Flora',ciudad:'Bucaramanga',depto:'Santander',capital:1200000,interes:9,plazo:4,estado:'pendiente',asesor:'asesor1',tel:'+57 317 555 1234',wa:'+57 317 555 1234',fechaInicio:addDays(-10),fechaCobro:addDays(5),frecuencia:'quincenal',lat:7.1193,lng:-73.1227,historial:[]},
+  ];
+  save(KEYS.clientes,clientes);
+  if(!load(KEYS.asesores).length)save(KEYS.asesores,[{id:'asesor1',nombre:'Asesor 1'},{id:'asesor2',nombre:'Asesor 2'}]);
+  // Seed some calendar events
+  const eventos=[
+    {id:'ev1',fecha:addDays(2),hora:'10:00',tipo:'cobro',clienteId:'c1',titulo:'Cobro cuota 2 - María Fernández'},
+    {id:'ev2',fecha:addDays(5),hora:'14:00',tipo:'seguimiento',clienteId:'c3',titulo:'Llamada negociación - Ana Gómez'},
+    {id:'ev3',fecha:addDays(5),hora:'16:00',tipo:'cobro',clienteId:'c5',titulo:'Cobro quincenal - Sandra Morales'},
+  ];
+  save(KEYS.eventos,eventos);
+}
+
+function populateAsesorSelects(){
+  const asesores=load(KEYS.asesores);
+  ['cAsesor','lkAsesor'].forEach(id=>{
+    const sel=document.getElementById(id);if(!sel)return;
+    const cur=sel.value;sel.innerHTML='<option value="">Sin asignar</option>';
+    asesores.forEach(a=>sel.innerHTML+=`<option value="${a.id}">${a.nombre}</option>`);
+    sel.value=cur;
+  });
+  // populate event cliente select
+  const evSel=document.getElementById('evCliente');
+  if(evSel){
+    const clientes=load(KEYS.clientes);
+    evSel.innerHTML='<option value="">Sin cliente</option>';
+    clientes.forEach(c=>evSel.innerHTML+=`<option value="${c.id}">${c.nombre}</option>`);
+  }
+}
+
+// ===================== SYNC LUKERO =====================
+function syncLukeroSolicitudes(){
+  const solicitudes=load(KEYS.lukeroSync);
+  if(!solicitudes.length)return;
+  const lk=load(KEYS.lukero);
+  let added=0;
+  solicitudes.forEach(sol=>{
+    if(!lk.find(c=>c.cedula===sol.cedula)){
+      lk.push({id:'lk_'+Date.now()+'_'+Math.random().toString(36).slice(2),nombre:sol.nombre||'Sin nombre',cedula:sol.cedula||'',tel:sol.tel||'',nivel:sol.nivel||1,puntos:0,creditosCompletados:0,capitalActivo:sol.capitalActivo||0,estadoCredito:sol.estado||'activo',fechaDesembolso:sol.fechaDesembolso||new Date().toISOString().slice(0,10),fechaVence:sol.fechaVence||'',asesor:'',historial:[{tipo:'nota',fecha:new Date().toLocaleDateString('es-CO'),autor:'Sistema',nota:'Solicitud desde app Lukero'}],fuente:'lukero-app',lat:null,lng:null});
+      added++;
+    }
+  });
+  if(added>0){save(KEYS.lukero,lk);showToast(`${added} solicitud(es) Lukero sincronizadas`);renderDashboard();}
+}
+
+// ===================== DASHBOARD =====================
+function renderDashboard(){
+  const clientes=load(KEYS.clientes);
+  const lukero=load(KEYS.lukero);
+  const totalCap=clientes.reduce((s,c)=>s+Number(c.capital||0),0);
+  const totalCobrar=clientes.reduce((s,c)=>s+(Number(c.capital||0)*(1+(Number(c.interes||0)/100)*Number(c.plazo||1))),0);
+  const vencidos=clientes.filter(c=>c.estado==='vencido').length;
+  const lkActivos=lukero.filter(c=>c.estadoCredito==='activo'||c.estadoCredito==='prorroga').length;
+  document.getElementById('lukeroActiveCount').textContent=lkActivos;
+  document.getElementById('dashCards').innerHTML=`
+    <div class="stat-card"><div class="label">Capital Invertido</div><div class="value gold">${fmt(totalCap)}</div></div>
+    <div class="stat-card"><div class="label">Total a Cobrar</div><div class="value blue">${fmt(totalCobrar)}</div></div>
+    <div class="stat-card"><div class="label">Vencidos</div><div class="value red">${vencidos}</div></div>
+    <div class="stat-card"><div class="label">Clientes Lukero</div><div class="value gold">${lukero.length}</div></div>`;
+  // Today's agenda
+  const todayStr=new Date().toISOString().slice(0,10);
+  const eventos=load(KEYS.eventos);
+  const todayEvs=eventos.filter(e=>e.fecha===todayStr);
+  const proximosCobros=clientes.filter(c=>c.fechaCobro===todayStr);
+  if(todayEvs.length||proximosCobros.length){
+    let html=`<div class="detail-panel"><h3>📅 Agenda de hoy</h3><div class="day-event-list">`;
+    proximosCobros.forEach(c=>{
+      html+=`<div class="day-event-item"><div class="dei-header"><span class="dei-type" style="background:rgba(240,180,41,.2);color:var(--gold);">💰 Cobro</span><span style="font-size:11px;color:var(--text3);">Hoy</span></div><div class="dei-title">${c.nombre}</div><div class="dei-sub">${fmt(c.capital)} · ${c.estado}</div></div>`;
+    });
+    todayEvs.forEach(e=>{
+      const col=e.tipo==='cobro'?'var(--blue)':e.tipo==='seguimiento'?'var(--purple)':'var(--orange)';
+      html+=`<div class="day-event-item"><div class="dei-header"><span class="dei-type" style="background:rgba(79,142,247,.15);color:${col};">${e.tipo}</span><span style="font-size:11px;color:var(--text3);">${e.hora||'Todo el día'}</span></div><div class="dei-title">${e.titulo}</div></div>`;
+    });
+    html+='</div></div>';
+    document.getElementById('dashTodayPanel').innerHTML=html;
+  }
+  const recent=[...clientes].sort((a,b)=>new Date(b.fechaInicio)-new Date(a.fechaInicio)).slice(0,6);
+  document.getElementById('recentBody').innerHTML=recent.map(c=>`<tr><td><strong>${c.nombre}</strong></td><td class="gold">${fmt(c.capital)}</td><td><span class="badge badge-${c.estado}">${c.estado}</span></td><td>${c.asesor||'—'}</td><td>${c.fechaInicio||'—'}</td></tr>`).join('');
+}
+
+// ===================== CLIENTES =====================
+function renderClientes(){
+  const q=(document.getElementById('clientSearch')?.value||'').toLowerCase();
+  let clientes=load(KEYS.clientes);
+  if(q)clientes=clientes.filter(c=>c.nombre.toLowerCase().includes(q)||c.cedula.includes(q)||(c.barrio||'').toLowerCase().includes(q)||(c.ciudad||'').toLowerCase().includes(q));
+  if(currentRole==='asesor')clientes=clientes.filter(c=>c.asesor===currentUser);
+  document.getElementById('clientesBody').innerHTML=clientes.map(c=>{
+    const total=Number(c.capital||0)*(1+(Number(c.interes||0)/100)*Number(c.plazo||1));
+    const addr=[c.barrio,c.ciudad].filter(Boolean).join(', ');
+    const hasGeo=c.lat&&c.lng;
+    return `<tr>
+      <td><strong>${c.nombre}</strong></td>
+      <td>${c.cedula}</td>
+      <td>${addr||'—'} ${hasGeo?'<span title="Ubicado en mapa">📍</span>':''}</td>
+      <td>${fmt(c.capital)}</td>
+      <td class="blue">${fmt(total)}</td>
+      <td><span class="badge badge-${c.estado}">${c.estado}</span></td>
+      <td style="${isOverdue(c.fechaCobro)?'color:var(--red);font-weight:600;':''}">${c.fechaCobro||'—'}</td>
+      <td><div class="action-btns">
+        <button class="btn-icon" onclick="verDetalle('${c.id}','cliente')" title="Detalle">👁</button>
+        <button class="btn-icon" onclick="openClienteModal('${c.id}')" title="Editar">✏️</button>
+        <button class="btn-icon" onclick="verEnMapa('${c.id}')" title="Ver en mapa">🗺️</button>
+        <button class="btn-icon" onclick="deleteCliente('${c.id}')" title="Eliminar">🗑</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function isOverdue(fecha){if(!fecha)return false;return new Date(fecha)<new Date();}
+
+function openClienteModal(id=null){
+  editingClienteId=id;pendingGeoLat=null;pendingGeoLng=null;
+  document.getElementById('modalClienteTitle').textContent=id?'Editar Cliente':'Nuevo Cliente';
+  document.getElementById('miniMapWrap').style.display='none';
+  document.getElementById('geoStatusModal').textContent='';
+  if(id){
+    const c=load(KEYS.clientes).find(x=>x.id===id);
+    if(c){
+      document.getElementById('cNombre').value=c.nombre||'';
+      document.getElementById('cCedula').value=c.cedula||'';
+      document.getElementById('cAsesor').value=c.asesor||'';
+      document.getElementById('cEstado').value=c.estado||'pendiente';
+      document.getElementById('cCapital').value=c.capital||'';
+      document.getElementById('cInteres').value=c.interes||'';
+      document.getElementById('cPlazo').value=c.plazo||'';
+      document.getElementById('cFechaInicio').value=c.fechaInicio||'';
+      document.getElementById('cFechaCobro').value=c.fechaCobro||'';
+      document.getElementById('cFrecuencia').value=c.frecuencia||'mensual';
+      document.getElementById('cTel').value=c.tel||'';
+      document.getElementById('cWA').value=c.wa||'';
+      document.getElementById('cEmail').value=c.email||'';
+      document.getElementById('cIG').value=c.ig||'';
+      document.getElementById('cDireccion').value=c.direccion||'';
+      document.getElementById('cBarrio').value=c.barrio||'';
+      document.getElementById('cCiudad').value=c.ciudad||'';
+      document.getElementById('cDepto').value=c.depto||'';
+      if(c.lat&&c.lng){pendingGeoLat=c.lat;pendingGeoLng=c.lng;}
+    }
+  } else {
+    ['cNombre','cCedula','cCapital','cInteres','cPlazo','cTel','cWA','cEmail','cIG','cDireccion','cBarrio','cCiudad','cDepto'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('cEstado').value='pendiente';
+    document.getElementById('cFrecuencia').value='mensual';
+    document.getElementById('cFechaInicio').value=new Date().toISOString().slice(0,10);
+    document.getElementById('cFechaCobro').value='';
+  }
+  populateAsesorSelects();
+  switchTab('tabInfo','modalCliente');
+  document.getElementById('modalCliente').style.display='flex';
+}
+
+async function geocodeClienteFromModal(){
+  const dir=document.getElementById('cDireccion').value;
+  const barrio=document.getElementById('cBarrio').value;
+  const ciudad=document.getElementById('cCiudad').value;
+  const depto=document.getElementById('cDepto').value;
+  const query=[dir,barrio,ciudad,depto,'Colombia'].filter(Boolean).join(', ');
+  const status=document.getElementById('geoStatusModal');
+  status.textContent='Buscando ubicación...';
+  const result=await geocodeQuery(query);
+  if(result){
+    pendingGeoLat=result.lat; pendingGeoLng=result.lon;
+    status.textContent=`✅ Ubicado: ${result.display_name.split(',').slice(0,3).join(',')}`;
+    status.style.color='var(--green)';
+    // Show mini map
+    const wrap=document.getElementById('miniMapWrap');
+    wrap.style.display='block';
+    if(!miniMap){
+      miniMap=L.map('miniMapWrap').setView([result.lat,result.lon],15);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(miniMap);
+      L.marker([result.lat,result.lon]).addTo(miniMap);
+    } else {
+      miniMap.setView([result.lat,result.lon],15);
+    }
+    setTimeout(()=>miniMap.invalidateSize(),100);
+  } else {
+    status.textContent='⚠️ No se encontró la dirección. Se asignará una ubicación aproximada por ciudad.';
+    status.style.color='var(--orange)';
+  }
+}
+
+function saveCliente(){
+  const clientes=load(KEYS.clientes);
+  const existing=editingClienteId?clientes.find(x=>x.id===editingClienteId):null;
+  // If no geo found, try to assign approximate from city
+  let lat=pendingGeoLat, lng=pendingGeoLng;
+  if(!lat){
+    const ciudad=(document.getElementById('cCiudad').value||'').toLowerCase();
+    const cityCoords={bogotá:[4.711,-74.072],bogota:[4.711,-74.072],medellín:[6.244,-75.581],medellin:[6.244,-75.581],cali:[3.451,-76.532],barranquilla:[10.963,-74.796],bucaramanga:[7.119,-73.122],cartagena:[10.391,-75.479],manizales:[5.070,-75.513],pereira:[4.813,-75.696],cucuta:[7.893,-72.504],ibague:[4.438,-75.232],santa_marta:[11.240,-74.199]};
+    const approx=cityCoords[ciudad];
+    if(approx){lat=approx[0]+(Math.random()-.5)*.05;lng=approx[1]+(Math.random()-.5)*.05;}
+    else{lat=4.711+(Math.random()-.5)*4;lng=-74.072+(Math.random()-.5)*8;}
+  }
+  const c={
+    id:editingClienteId||'c'+Date.now(),
+    nombre:document.getElementById('cNombre').value,
+    cedula:document.getElementById('cCedula').value,
+    asesor:document.getElementById('cAsesor').value,
+    estado:document.getElementById('cEstado').value,
+    capital:Number(document.getElementById('cCapital').value),
+    interes:Number(document.getElementById('cInteres').value),
+    plazo:Number(document.getElementById('cPlazo').value),
+    fechaInicio:document.getElementById('cFechaInicio').value,
+    fechaCobro:document.getElementById('cFechaCobro').value,
+    frecuencia:document.getElementById('cFrecuencia').value,
+    tel:document.getElementById('cTel').value,
+    wa:document.getElementById('cWA').value,
+    email:document.getElementById('cEmail').value,
+    ig:document.getElementById('cIG').value,
+    direccion:document.getElementById('cDireccion').value,
+    barrio:document.getElementById('cBarrio').value,
+    ciudad:document.getElementById('cCiudad').value,
+    depto:document.getElementById('cDepto').value,
+    lat, lng,
+    historial:existing?.historial||[],
+    lukeroId:existing?.lukeroId||null
+  };
+  if(editingClienteId){const i=clientes.findIndex(x=>x.id===editingClienteId);clientes[i]=c;}
+  else clientes.push(c);
+  save(KEYS.clientes,clientes);
+  closeModal('modalCliente');
+  renderClientes();
+  if(mapInited)refreshMapMarkers();
+  showToast('Cliente guardado');
+}
+
+function deleteCliente(id){
+  if(!confirm('¿Eliminar?'))return;
+  save(KEYS.clientes,load(KEYS.clientes).filter(c=>c.id!==id));
+  renderClientes();showToast('Eliminado','error');
+}
+
+function verEnMapa(id){
+  showView('mapa');
+  setTimeout(()=>{
+    const c=load(KEYS.clientes).find(x=>x.id===id);
+    if(c&&c.lat&&mapInstance){mapInstance.setView([c.lat,c.lng],16);showToast('📍 '+c.nombre);}
+  },300);
+}
+
+// ===================== MAPA CON GEOCODIFICACIÓN =====================
+async function geocodeQuery(query){
+  try{
+    const url=`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&countrycodes=co`;
+    const res=await fetch(url,{headers:{'Accept-Language':'es'}});
+    const data=await res.json();
+    return data.length?data[0]:null;
+  }catch{return null;}
+}
+
+async function geocodeAddress(){
+  const input=document.getElementById('mapSearchInput').value.trim();
+  if(!input)return;
+  const result=document.getElementById('geocodeResult');
+  result.style.display='block';
+  result.textContent='Buscando...';
+  const geo=await geocodeQuery(input+', Colombia');
+  if(geo){
+    mapInstance.setView([geo.lat,geo.lon],16);
+    L.popup().setLatLng([geo.lat,geo.lon]).setContent(`<strong>📍 Resultado</strong><br>${geo.display_name.split(',').slice(0,4).join(',')}`).openOn(mapInstance);
+    result.textContent='✅ '+geo.display_name.split(',').slice(0,4).join(',');
+    result.style.color='var(--green)';
+  } else {
+    result.textContent='⚠️ No se encontró. Intenta con ciudad o dirección más específica.';
+    result.style.color='var(--orange)';
+  }
+}
+
+function initMap(){
+  if(mapInited)return;
+  mapInited=true;
+  mapInstance=L.map('mapContainer').setView([4.711,-74.072],6);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(mapInstance);
+  refreshMapMarkers();
+}
+
+function refreshMapMarkers(){
+  if(!mapInstance)return;
+  // Remove existing markers
+  mapInstance.eachLayer(l=>{if(l instanceof L.Marker)mapInstance.removeLayer(l);});
+  const clientes=load(KEYS.clientes);
+  const listEl=document.getElementById('mapClientList');
+  let listHTML='';
+  clientes.forEach(c=>{
+    if(!c.lat||!c.lng)return;
+    const col=COLORS_MAP[c.estado]||'#f0b429';
+    const icon=L.divIcon({html:`<div style="width:16px;height:16px;border-radius:50%;background:${col};border:2px solid rgba(255,255,255,.6);box-shadow:0 2px 6px rgba(0,0,0,.4);"></div>`,className:'',iconSize:[16,16],iconAnchor:[8,8]});
+    const addr=[c.barrio,c.ciudad].filter(Boolean).join(', ');
+    const total=Number(c.capital||0)*(1+(Number(c.interes||0)/100)*Number(c.plazo||1));
+    const wa=c.wa?`<a href="https://wa.me/${c.wa.replace(/\D/g,'')}" target="_blank" style="color:#25D366;font-weight:600;">WhatsApp</a>`:'';
+    L.marker([c.lat,c.lng],{icon}).addTo(mapInstance)
+      .bindPopup(`<div style="font-family:sans-serif;min-width:180px;">
+        <strong style="font-size:14px;">${c.nombre}</strong><br>
+        <span style="font-size:11px;color:#888;">${addr}</span><br>
+        <span style="font-size:11px;">${c.direccion||''}</span><br>
+        <hr style="margin:6px 0;border-color:#333;">
+        <span style="font-size:12px;">Capital: <strong>$${Number(c.capital||0).toLocaleString('es-CO')}</strong></span><br>
+        <span style="font-size:12px;">Total: <strong>$${Number(total||0).toLocaleString('es-CO')}</strong></span><br>
+        <span style="font-size:12px;">Estado: <strong style="color:${col};">${c.estado}</strong></span><br>
+        ${c.tel?`<span style="font-size:12px;">📞 ${c.tel}</span><br>`:''}
+        ${wa}
+        ${c.fechaCobro?`<br><span style="font-size:11px;color:#888;">Próx. cobro: ${c.fechaCobro}</span>`:''}
+      </div>`);
+    listHTML+=`<div class="map-client-item" onclick="mapInstance.setView([${c.lat},${c.lng}],17);">
+      <div class="mci-dot" style="background:${col};"></div>
+      <div class="mci-info">
+        <div class="mci-name">${c.nombre}</div>
+        <div class="mci-addr">${addr||'Sin dirección'}</div>
+      </div>
+    </div>`;
+  });
+  // Lukero clients
+  const lukero=load(KEYS.lukero);
+  lukero.forEach(c=>{
+    if(!c.lat||!c.lng)return;
+    const icon=L.divIcon({html:`<div style="width:16px;height:16px;border-radius:50%;background:#f0b429;border:2px solid #000;box-shadow:0 2px 6px rgba(0,0,0,.4);"></div>`,className:'',iconSize:[16,16],iconAnchor:[8,8]});
+    L.marker([c.lat,c.lng],{icon}).addTo(mapInstance)
+      .bindPopup(`<strong>⚡ ${c.nombre}</strong><br>Nivel ${c.nivel} · ${fmt(c.capitalActivo)}<br>Estado: ${c.estadoCredito}`);
+  });
+  if(listEl)listEl.innerHTML=listHTML||'<div style="color:var(--text3);font-size:12px;">Ningún cliente tiene ubicación guardada</div>';
+}
+
+// ===================== CALENDARIO MEJORADO =====================
+let selectedDayStr=null;
+
+function renderCalendar(){
+  const months=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  document.getElementById('calTitle').textContent=months[calMonth]+' '+calYear;
+  const eventos=load(KEYS.eventos);
+  const clientes=load(KEYS.clientes);
+  const festivos=getFestivos(calYear);
+  const grid=document.getElementById('calGrid');
+  grid.innerHTML='';
+  ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'].forEach(d=>{
+    const el=document.createElement('div');el.className='cal-day-name';el.textContent=d;grid.appendChild(el);
+  });
+  const first=new Date(calYear,calMonth,1);
+  const last=new Date(calYear,calMonth+1,0);
+  const today=new Date();
+  const todayStr=today.toISOString().slice(0,10);
+
+  for(let i=0;i<first.getDay();i++){const el=document.createElement('div');el.className='cal-cell other-month';grid.appendChild(el);}
+
+  for(let d=1;d<=last.getDate();d++){
+    const el=document.createElement('div');
+    el.className='cal-cell';
+    const dateStr=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    if(dateStr===todayStr)el.classList.add('today');
+    if(dateStr===selectedDayStr)el.classList.add('selected');
+    el.innerHTML=`<div class="day-num">${d}</div>`;
+
+    // Festivos
+    if(festivos[dateStr]){el.innerHTML+=`<div class="cal-event event-festivo">🇨🇴 ${festivos[dateStr]}</div>`;}
+
+    // Quincenas
+    if(d===15||d===last.getDate()){el.innerHTML+=`<div class="cal-event event-quincena">💰 Quincena</div>`;}
+
+    // Prima (junio y diciembre)
+    if((calMonth===5&&d===last.getDate())||(calMonth===11&&d===last.getDate())){el.innerHTML+=`<div class="cal-event event-prima">🎁 Prima</div>`;}
+
+    // Cobros automáticos de clientes
+    const cobros=clientes.filter(c=>c.fechaCobro===dateStr);
+    cobros.forEach(c=>{el.innerHTML+=`<div class="cal-event event-cobro" title="${c.nombre}">💰 ${c.nombre.split(' ')[0]}</div>`;});
+
+    // Eventos manuales
+    const evs=eventos.filter(e=>e.fecha===dateStr);
+    evs.forEach(e=>{
+      const cls=e.tipo==='cobro'?'event-cobro':e.tipo==='seguimiento'?'event-seguimiento':'event-custom';
+      const ico=e.tipo==='cobro'?'💰':e.tipo==='seguimiento'?'📞':'📌';
+      el.innerHTML+=`<div class="cal-event ${cls}">${ico} ${e.titulo.substring(0,18)}</div>`;
+    });
+
+    el.onclick=()=>selectDay(dateStr);
+    grid.appendChild(el);
+  }
+
+  // Show today by default
+  if(!selectedDayStr)selectDay(todayStr);
+}
+
+function selectDay(dateStr){
+  selectedDayStr=dateStr;
+  // Update selected class
+  document.querySelectorAll('.cal-cell').forEach(el=>el.classList.remove('selected'));
+  // Re-render to update selection (quick approach)
+  renderCalendar2(dateStr);
+  renderDayPanel(dateStr);
+}
+
+function renderCalendar2(sel){
+  // Update selected cell visually without full re-render
+  document.querySelectorAll('.cal-cell:not(.other-month)').forEach(el=>{
+    const num=parseInt(el.querySelector('.day-num')?.textContent||'0');
+    const dateStr=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(num).padStart(2,'0')}`;
+    el.classList.toggle('selected',dateStr===sel);
+  });
+}
+
+function renderDayPanel(dateStr){
+  const d=new Date(dateStr+'T12:00:00');
+  const dayNames=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const monthNames=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  document.getElementById('dayPanelDate').textContent=`${dayNames[d.getDay()]} ${d.getDate()}`;
+  document.getElementById('dayPanelSub').textContent=`${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+  document.getElementById('addEventBtn').onclick=()=>{
+    document.getElementById('evFecha').value=dateStr;
+    populateAsesorSelects();
+    openEventModal();
+  };
+
+  const eventos=load(KEYS.eventos);
+  const clientes=load(KEYS.clientes);
+  const festivos=getFestivos(d.getFullYear());
+  const dom=d.getDate();
+  const lastDay=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
+
+  let items=[];
+
+  // Festivo
+  if(festivos[dateStr])items.push({tipo:'festivo',ico:'🇨🇴',titulo:festivos[dateStr],sub:'Festivo nacional',col:'var(--red)',bg:'rgba(247,85,85,.15)'});
+
+  // Quincena
+  if(dom===15||dom===lastDay)items.push({tipo:'quincena',ico:'💰',titulo:'Día de quincena',sub:'Pago de nómina Colombia',col:'var(--gold)',bg:'rgba(240,180,41,.15)'});
+
+  // Prima
+  if((d.getMonth()===5&&dom===lastDay)||(d.getMonth()===11&&dom===lastDay))items.push({tipo:'prima',ico:'🎁',titulo:'Prima semestral',sub:'Junio / Diciembre',col:'var(--green)',bg:'rgba(61,214,140,.15)'});
+
+  // Cobros automáticos
+  const cobros=clientes.filter(c=>c.fechaCobro===dateStr);
+  cobros.forEach(c=>{
+    const total=Number(c.capital||0)*(1+(Number(c.interes||0)/100)*Number(c.plazo||1));
+    items.push({tipo:'cobro',ico:'💰',titulo:'Cobro · '+c.nombre,sub:`${fmt(c.capital)} · ${c.estado} · ${c.frecuencia||'mensual'}`,col:'var(--blue)',bg:'rgba(79,142,247,.15)',clienteId:c.id,tel:c.tel,wa:c.wa});
+  });
+
+  // Eventos manuales
+  eventos.filter(e=>e.fecha===dateStr).forEach(e=>{
+    const cliente=e.clienteId?clientes.find(c=>c.id===e.clienteId):null;
+    const col=e.tipo==='cobro'?'var(--blue)':e.tipo==='seguimiento'?'var(--purple)':'var(--orange)';
+    const bg=e.tipo==='cobro'?'rgba(79,142,247,.15)':e.tipo==='seguimiento'?'rgba(167,139,250,.15)':'rgba(255,140,66,.15)';
+    items.push({tipo:e.tipo,ico:e.tipo==='cobro'?'💰':e.tipo==='seguimiento'?'📞':'📌',titulo:e.titulo,sub:cliente?`Cliente: ${cliente.nombre} · ${e.hora||''}`:e.hora||'',col,bg,tel:cliente?.tel,wa:cliente?.wa,eventId:e.id});
+  });
+
+  if(!items.length){
+    document.getElementById('dayEventList').innerHTML=`<div class="day-empty">Sin eventos programados<br><span style="font-size:11px;">Haz clic en + para agregar</span></div>`;
+    return;
+  }
+
+  document.getElementById('dayEventList').innerHTML=items.map(item=>`
+    <div class="day-event-item">
+      <div class="dei-header">
+        <span class="dei-type" style="background:${item.bg};color:${item.col};">${item.ico} ${item.tipo}</span>
+      </div>
+      <div class="dei-title">${item.titulo}</div>
+      ${item.sub?`<div class="dei-sub">${item.sub}</div>`:''}
+      <div class="dei-actions">
+        ${item.wa?`<a href="https://wa.me/${item.wa.replace(/\D/g,'')}" target="_blank" class="btn-sm btn-primary" style="font-size:11px;text-decoration:none;">WhatsApp</a>`:''}
+        ${item.tel&&!item.wa?`<a href="tel:${item.tel}" class="btn-sm btn-ghost" style="font-size:11px;text-decoration:none;">📞 Llamar</a>`:''}
+        ${item.eventId?`<button class="btn-sm btn-ghost" style="font-size:11px;" onclick="deleteEvento('${item.eventId}')">Eliminar</button>`:''}
+      </div>
+    </div>`).join('');
+}
+
+function calPrev(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}selectedDayStr=null;renderCalendar();}
+function calNext(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}selectedDayStr=null;renderCalendar();}
+
+function openEventModal(){
+  if(!document.getElementById('evFecha').value){
+    document.getElementById('evFecha').value=new Date().toISOString().slice(0,10);
+  }
+  populateAsesorSelects();
+  document.getElementById('modalEvento').style.display='flex';
+}
+
+function saveEvento(){
+  const evs=load(KEYS.eventos);
+  evs.push({
+    id:'ev'+Date.now(),
+    fecha:document.getElementById('evFecha').value,
+    hora:document.getElementById('evHora').value,
+    tipo:document.getElementById('evTipo').value,
+    clienteId:document.getElementById('evCliente').value,
+    titulo:document.getElementById('evTitulo').value
+  });
+  save(KEYS.eventos,evs);
+  closeModal('modalEvento');
+  document.getElementById('evTitulo').value='';
+  renderCalendar();
+  if(selectedDayStr)renderDayPanel(selectedDayStr);
+  showToast('Evento guardado');
+}
+
+function deleteEvento(id){
+  save(KEYS.eventos,load(KEYS.eventos).filter(e=>e.id!==id));
+  renderCalendar();
+  if(selectedDayStr)renderDayPanel(selectedDayStr);
+}
+
+// ===================== FESTIVOS COLOMBIA =====================
+function getFestivos(y){
+  const f={};
+  const add=(m,d,n)=>{const k=`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;f[k]=n;};
+  const lunes=(m,d,n)=>{let dt=new Date(y,m-1,d);while(dt.getDay()!==1)dt.setDate(dt.getDate()+1);add(dt.getMonth()+1,dt.getDate(),n);};
+  // Fijos
+  add(1,1,'Año Nuevo');add(5,1,'Día del Trabajo');add(7,20,'Independencia');add(8,7,'Batalla de Boyacá');add(12,8,'Inmaculada Concepción');add(12,25,'Navidad');add(12,31,'Fin de año');
+  // Ley Emiliani (lunes siguiente)
+  lunes(1,6,'Reyes Magos');lunes(3,19,'San José');lunes(6,29,'San Pedro y San Pablo');lunes(8,15,'Asunción');lunes(10,12,'Día de la Raza');lunes(11,1,'Todos los Santos');lunes(11,11,'Independencia Cartagena');
+  // Pascua
+  const easter=getEaster(y);
+  const addE=(offset,name)=>{const d=new Date(easter.getTime()+offset*86400000);add(d.getMonth()+1,d.getDate(),name);};
+  addE(-3,'Jueves Santo');addE(-2,'Viernes Santo');addE(40,'Ascensión del Señor');addE(49,'Corpus Christi');addE(50,'Sagrado Corazón');
+  return f;
+}
+function getEaster(y){
+  const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),month=Math.floor((h+l-7*m+114)/31),day=((h+l-7*m+114)%31)+1;
+  return new Date(y,month-1,day);
+}
+
+// ===================== LUKERO =====================
+function renderLukero(){
+  const q=(document.getElementById('lukeroSearch')?.value||'').toLowerCase();
+  let lk=load(KEYS.lukero);
+  if(q)lk=lk.filter(c=>c.nombre.toLowerCase().includes(q)||c.cedula.includes(q));
+  const activos=lk.filter(c=>c.estadoCredito==='activo').length;
+  const vencidos=lk.filter(c=>c.estadoCredito==='vencido').length;
+  const totalCap=lk.reduce((s,c)=>s+Number(c.capitalActivo||0),0);
+  document.getElementById('lukeroCards').innerHTML=`
+    <div class="stat-card"><div class="label">Total</div><div class="value gold">${lk.length}</div></div>
+    <div class="stat-card"><div class="label">Activos</div><div class="value green">${activos}</div></div>
+    <div class="stat-card"><div class="label">Vencidos</div><div class="value red">${vencidos}</div></div>
+    <div class="stat-card"><div class="label">Capital</div><div class="value blue">${fmt(totalCap)}</div></div>`;
+  document.getElementById('lukeroBody').innerHTML=lk.map(c=>`
+    <tr>
+      <td><strong>${c.nombre}</strong><br><small style="color:var(--text3)">${c.cedula}</small></td>
+      <td><span style="background:linear-gradient(135deg,var(--gold),#ff8c00);color:#000;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;">N${c.nivel||1}</span></td>
+      <td>${c.puntos||0} pts</td>
+      <td class="gold">${fmt(c.capitalActivo)}</td>
+      <td style="${isOverdue(c.fechaVence)?'color:var(--red);font-weight:600;':''}">${c.fechaVence||'—'}</td>
+      <td><span class="badge badge-${c.estadoCredito==='activo'?'pendiente':c.estadoCredito==='vencido'?'vencido':c.estadoCredito==='pagado'?'cobrado':'negociacion'}">${c.estadoCredito}</span></td>
+      <td><div class="action-btns">
+        <button class="btn-icon" onclick="verDetalle('${c.id}','lukero')">👁</button>
+        <button class="btn-icon" onclick="deleteLukero('${c.id}')">🗑</button>
+      </div></td>
+    </tr>`).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:32px;">Sin clientes Lukero</td></tr>';
+}
+
+function openLukeroModal(){populateAsesorSelects();document.getElementById('lkFecha').value=new Date().toISOString().slice(0,10);document.getElementById('modalLukero').style.display='flex';}
+function saveLukeroCliente(){
+  const lk=load(KEYS.lukero);
+  lk.push({id:'lk_'+Date.now(),nombre:document.getElementById('lkNombre').value,cedula:document.getElementById('lkCedula').value,tel:document.getElementById('lkTel').value,nivel:Number(document.getElementById('lkNivel').value),puntos:0,creditosCompletados:0,capitalActivo:Number(document.getElementById('lkCapital').value),estadoCredito:document.getElementById('lkEstado').value,fechaDesembolso:document.getElementById('lkFecha').value,fechaVence:'',asesor:document.getElementById('lkAsesor').value,historial:[],fuente:'manual',lat:null,lng:null});
+  save(KEYS.lukero,lk);closeModal('modalLukero');renderLukero();showToast('Cliente Lukero guardado');
+}
+function deleteLukero(id){if(!confirm('¿Eliminar?'))return;save(KEYS.lukero,load(KEYS.lukero).filter(c=>c.id!==id));renderLukero();}
+
+// ===================== DETALLE =====================
+function verDetalle(id,tipo){
+  const key=tipo==='cliente'?KEYS.clientes:KEYS.lukero;
+  const c=load(key).find(x=>x.id===id);
+  if(!c)return;
+  document.getElementById('detalleNombre').textContent=c.nombre;
+  const addr=tipo==='cliente'?[c.direccion,c.barrio,c.ciudad].filter(Boolean).join(', '):'';
+  document.getElementById('detalleBody').innerHTML=`
+    <div class="detail-panel"><h3>Información</h3>
+      <div class="info-grid">
+        ${tipo==='cliente'?`
+        <div class="info-item"><label>Capital</label><span class="gold">${fmt(c.capital)}</span></div>
+        <div class="info-item"><label>Estado</label><span class="badge badge-${c.estado}">${c.estado}</span></div>
+        <div class="info-item"><label>Próx. cobro</label><span style="${isOverdue(c.fechaCobro)?'color:var(--red);':''}">${c.fechaCobro||'—'}</span></div>
+        <div class="info-item"><label>Frecuencia</label><span>${c.frecuencia||'mensual'}</span></div>
+        <div class="info-item"><label>Dirección</label><span>${addr||'—'}</span></div>
+        <div class="info-item"><label>Teléfono</label><span>${c.tel||'—'}</span></div>
+        `:`
+        <div class="info-item"><label>Nivel</label><span class="gold">N${c.nivel}</span></div>
+        <div class="info-item"><label>Capital</label><span class="gold">${fmt(c.capitalActivo)}</span></div>
+        <div class="info-item"><label>Estado</label><span>${c.estadoCredito}</span></div>
+        <div class="info-item"><label>Puntos</label><span>${c.puntos||0}</span></div>
+        `}
+      </div>
+    </div>
+    <div class="detail-panel"><h3>Historial de seguimiento</h3>
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+        <select id="hiTipo" style="padding:8px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;">
+          <option value="llamada">📞 Llamada</option><option value="mensaje">💬 Mensaje</option><option value="pago">💰 Pago</option><option value="nota">📝 Nota</option>
+        </select>
+        <input id="hiNota" placeholder="Descripción..." style="flex:1;min-width:160px;padding:8px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;">
+        <button class="btn-sm btn-primary" onclick="addHistorial('${c.id}','${tipo}')">+ Agregar</button>
+      </div>
+      <div class="history-list" id="historialList">${renderHistorial(c.historial||[])}</div>
+    </div>`;
+  document.getElementById('modalDetalle').style.display='flex';
+}
+function renderHistorial(h){
+  if(!h.length)return '<p style="color:var(--text3);font-size:13px;">Sin entradas</p>';
+  return [...h].reverse().map(e=>`<div class="history-item"><div class="hi-head"><span class="hi-type type-${e.tipo}">${e.tipo}</span><span class="hi-date">${e.fecha}</span></div><div class="hi-note">${e.nota}</div><div class="hi-author">— ${e.autor}</div></div>`).join('');
+}
+function addHistorial(id,tipo){
+  const nota=document.getElementById('hiNota').value.trim();if(!nota)return;
+  const key=tipo==='cliente'?KEYS.clientes:KEYS.lukero;
+  const items=load(key);const item=items.find(x=>x.id===id);if(!item)return;
+  if(!item.historial)item.historial=[];
+  item.historial.push({tipo:document.getElementById('hiTipo').value,fecha:new Date().toLocaleDateString('es-CO'),autor:currentUser,nota});
+  save(key,items);
+  document.getElementById('historialList').innerHTML=renderHistorial(item.historial);
+  document.getElementById('hiNota').value='';showToast('Entrada agregada');
+}
+
+// ===================== PROSPECTOS =====================
+function renderProspectos(){
+  let p=load(KEYS.prospectos);
+  if(currentRole==='ventas')p=p.filter(x=>x.asignadoA===currentUser||!x.asignadoA);
+  document.getElementById('prospectosBody').innerHTML=p.map(x=>`<tr><td><strong>${x.nombre}</strong></td><td>${x.tel}</td><td class="gold">${fmt(x.interes)}</td><td><span class="badge badge-prospecto">${x.fuente}</span></td><td>${x.fecha}</td><td><button class="btn-sm btn-primary" onclick="convertirProspecto('${x.id}')">Convertir</button> <button class="btn-icon" onclick="deleteProspecto('${x.id}')">🗑</button></td></tr>`).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:32px;">Sin prospectos</td></tr>';
+}
+function openProspectoModal(){document.getElementById('modalProspecto').style.display='flex';}
+function saveProspecto(){
+  const p=load(KEYS.prospectos);
+  p.push({id:'p'+Date.now(),nombre:document.getElementById('pNombre').value,tel:document.getElementById('pTel').value,interes:Number(document.getElementById('pInteres').value),fuente:document.getElementById('pFuente').value,fecha:new Date().toLocaleDateString('es-CO'),asignadoA:currentRole==='ventas'?currentUser:''});
+  save(KEYS.prospectos,p);closeModal('modalProspecto');renderProspectos();showToast('Prospecto guardado');
+}
+function deleteProspecto(id){save(KEYS.prospectos,load(KEYS.prospectos).filter(x=>x.id!==id));renderProspectos();}
+function convertirProspecto(id){
+  const p=load(KEYS.prospectos).find(x=>x.id===id);if(!p)return;
+  editingClienteId=null;
+  document.getElementById('cNombre').value=p.nombre;
+  document.getElementById('cTel').value=p.tel;
+  document.getElementById('cCapital').value=p.interes||'';
+  if(document.getElementById('cCiudad'))document.getElementById('cCiudad').value=p.ciudad||'';
+  if(document.getElementById('cBarrio'))document.getElementById('cBarrio').value=p.barrio||'';
+  if(document.getElementById('cDireccion'))document.getElementById('cDireccion').value=p.direccion||'';
+  document.getElementById('modalClienteTitle').textContent='Nuevo Cliente (desde prospecto)';
+  switchTab('tabInfo','modalCliente');document.getElementById('modalCliente').style.display='flex';
+}
+
+// ===================== FINANCIERO =====================
+function renderFinanciero(){
+  const clientes=load(KEYS.clientes);const lukero=load(KEYS.lukero);
+  const tCap=clientes.reduce((s,c)=>s+Number(c.capital||0),0);
+  const tCobrar=clientes.reduce((s,c)=>s+(Number(c.capital||0)*(1+(Number(c.interes||0)/100)*Number(c.plazo||1))),0);
+  const cobrados=clientes.filter(c=>c.estado==='cobrado').reduce((s,c)=>s+(Number(c.capital||0)*(1+(Number(c.interes||0)/100)*Number(c.plazo||1))),0);
+  document.getElementById('finTradicional').innerHTML=FR('Capital invertido',fmt(tCap),'gold')+FR('Total a cobrar',fmt(tCobrar),'blue')+FR('Ganancia esperada',fmt(tCobrar-tCap),'green')+FR('Ya cobrado',fmt(cobrados),'green')+FR('Clientes activos',clientes.filter(c=>c.estado!=='cobrado').length,'text');
+  const lkCap=lukero.reduce((s,c)=>s+Number(c.capitalActivo||0),0);const lkCob=lkCap*1.3;
+  document.getElementById('finLukero').innerHTML=FR('Capital en calle',fmt(lkCap),'gold')+FR('Total a cobrar (est.)',fmt(lkCob),'blue')+FR('Ganancia esperada',fmt(lkCob-lkCap),'green')+FR('Clientes activos',lukero.filter(c=>c.estadoCredito==='activo').length,'text');
+  document.getElementById('finTotal').innerHTML=FR('Capital total',fmt(tCap+lkCap),'gold')+FR('Total a cobrar',fmt(tCobrar+lkCob),'blue')+FR('Ganancia total',fmt((tCobrar-tCap)+(lkCob-lkCap)),'green')+FR('Total clientes',clientes.length+lukero.length,'text');
+}
+function FR(l,v,c){return `<div class="fin-row"><span class="fin-label">${l}</span><span class="fin-value ${c}">${v}</span></div>`;}
+
+// ===================== IMPORTAR PROSPECTOS =====================
+let importedRows=[];
+
+function descargarPlantilla(){
+  const ws=XLSX.utils.json_to_sheet([
+    {nombre:'María Fernández',cedula:'1020304050',telefono:'3001234567',ciudad:'Bogotá',barrio:'Chapinero',direccion:'Cra 7 #45-20',monto_interes:300000,fuente:'Referido'},
+    {nombre:'Carlos Pérez',cedula:'1098765432',telefono:'3109876543',ciudad:'Medellín',barrio:'Laureles',direccion:'Cll 33 #70-12',monto_interes:200000,fuente:'Redes sociales'}
+  ]);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Prospectos');
+  XLSX.writeFile(wb,'plantilla_prospectos_lukero.xlsx');
+  showToast('Plantilla descargada');
+}
+
+function handleFileImport(e){
+  const file=e.target.files[0];
+  if(!file)return;
+  const status=document.getElementById('importStatus');
+  status.innerHTML='<span style="color:var(--text2);">Procesando archivo...</span>';
+  const reader=new FileReader();
+  reader.onload=(evt)=>{
+    try{
+      const data=new Uint8Array(evt.target.result);
+      const wb=XLSX.read(data,{type:'array'});
+      const sheet=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(sheet,{defval:''});
+      processImportedRows(rows);
+    }catch(err){
+      status.innerHTML='<span style="color:var(--red);">⚠️ Error al leer el archivo. Verifica el formato.</span>';
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function normalizeKey(obj,...keys){
+  for(const k of keys){
+    for(const objKey in obj){
+      if(objKey.toLowerCase().trim()===k)return obj[objKey];
+    }
+  }
+  return '';
+}
+
+function processImportedRows(rows){
+  const status=document.getElementById('importStatus');
+  importedRows=[];
+  let errores=0;
+  rows.forEach(r=>{
+    const nombre=normalizeKey(r,'nombre','nombre completo','name');
+    const cedula=String(normalizeKey(r,'cedula','cédula','documento','nit')).trim();
+    const telefono=String(normalizeKey(r,'telefono','teléfono','tel','celular')).trim();
+    if(!nombre||!cedula||!telefono){errores++;return;}
+    importedRows.push({
+      nombre:String(nombre).trim(),
+      cedula,
+      telefono,
+      ciudad:String(normalizeKey(r,'ciudad','city')).trim(),
+      barrio:String(normalizeKey(r,'barrio','neighborhood')).trim(),
+      direccion:String(normalizeKey(r,'direccion','dirección','address')).trim(),
+      monto_interes:Number(normalizeKey(r,'monto_interes','monto','interes','interés'))||0,
+      fuente:String(normalizeKey(r,'fuente','source')).trim()||'Importado'
+    });
+  });
+  if(!importedRows.length){
+    status.innerHTML='<span style="color:var(--red);">⚠️ No se encontraron filas válidas. Verifica que tenga las columnas nombre, cedula y telefono.</span>';
+    return;
+  }
+  status.innerHTML=`<span style="color:var(--green);">✅ ${importedRows.length} registro(s) listos para importar${errores?` (${errores} con datos incompletos fueron omitidos)`:''}</span>`;
+  document.getElementById('importPreviewWrap').style.display='block';
+  document.getElementById('importPreviewBody').innerHTML=importedRows.map(r=>`
+    <tr><td>${r.nombre}</td><td>${r.cedula}</td><td>${r.telefono}</td><td>${r.ciudad||'—'}</td><td>${r.monto_interes?fmt(r.monto_interes):'—'}</td><td><span class="badge badge-prospecto">${r.fuente}</span></td></tr>
+  `).join('');
+}
+
+function confirmarImportacion(){
+  if(!importedRows.length)return;
+  const prospectos=load(KEYS.prospectos);
+  let nuevos=0, duplicados=0;
+  importedRows.forEach(r=>{
+    if(prospectos.find(p=>p.cedula===r.cedula)){duplicados++;return;}
+    prospectos.push({
+      id:'p'+Date.now()+'_'+Math.random().toString(36).slice(2),
+      nombre:r.nombre,cedula:r.cedula,tel:r.telefono,ciudad:r.ciudad,barrio:r.barrio,direccion:r.direccion,
+      interes:r.monto_interes,fuente:r.fuente,fecha:new Date().toLocaleDateString('es-CO'),
+      asignadoA:currentRole==='ventas'?currentUser:''
+    });
+    nuevos++;
+  });
+  save(KEYS.prospectos,prospectos);
+  importedRows=[];
+  document.getElementById('importPreviewWrap').style.display='none';
+  document.getElementById('importFileInput').value='';
+  document.getElementById('importStatus').innerHTML=`<span style="color:var(--green);">✅ Importación completa: ${nuevos} nuevo(s)${duplicados?`, ${duplicados} duplicado(s) omitido(s)`:''}</span>`;
+  showToast(`${nuevos} prospecto(s) importado(s)`);
+  if(document.getElementById('view-prospectos').classList.contains('active'))renderProspectos();
+}
+
+// ===================== METAS Y ALERTAS =====================
+// Modelo de negocio Lukero:
+// 20% paga anticipado, 40% paga el día de pago, 10% día 1 de mora, 10% hasta día 10 de mora
+// Tasa de costo ~30% por periodos de 8 a 15 días
+const MODELO_NEGOCIO={anticipado:0.20,puntual:0.40,mora1:0.10,moraHasta10:0.10,tasaCosto:0.30,periodoDiasMin:8,periodoDiasMax:15};
+
+function clasificarEtapaPago(c,hoy){
+  if(!c.fechaCobro)return null;
+  const fechaCobro=new Date(c.fechaCobro);
+  const diffDias=Math.floor((hoy-fechaCobro)/86400000);
+  if(c.estado==='cobrado'){
+    if(diffDias<0)return 'anticipado';
+    if(diffDias===0)return 'puntual';
+    if(diffDias===1)return 'mora1';
+    if(diffDias>1&&diffDias<=10)return 'moraHasta10';
+    return 'moraTardia';
+  }
+  // Aún no pagado
+  if(diffDias>10)return 'moraTardia';
+  if(diffDias>1)return 'moraHasta10';
+  if(diffDias===1)return 'mora1';
+  if(diffDias===0)return 'puntual';
+  return 'pendienteFuturo';
+}
+
+function renderMetas(){
+  const clientes=load(KEYS.clientes);
+  const lukero=load(KEYS.lukero);
+  const hoy=new Date();
+  hoy.setHours(0,0,0,0);
+
+  const totalCartera=clientes.length;
+  const conteo={anticipado:0,puntual:0,mora1:0,moraHasta10:0,moraTardia:0,pendienteFuturo:0};
+  clientes.forEach(c=>{
+    const etapa=clasificarEtapaPago(c,hoy);
+    if(etapa)conteo[etapa]=(conteo[etapa]||0)+1;
+  });
+
+  const cobrados=clientes.filter(c=>c.estado==='cobrado').length;
+  const totalEsperado=clientes.reduce((s,c)=>s+(Number(c.capital||0)*(1+(Number(c.interes||0)/100)*Number(c.plazo||1))),0);
+  const totalRecaudado=clientes.filter(c=>c.estado==='cobrado').reduce((s,c)=>s+(Number(c.capital||0)*(1+(Number(c.interes||0)/100)*Number(c.plazo||1))),0);
+  const pctRecaudo=totalEsperado?Math.round((totalRecaudado/totalEsperado)*100):0;
+
+  // Cards resumen
+  document.getElementById('metasCards').innerHTML=`
+    <div class="stat-card"><div class="label">Meta de recaudo</div><div class="value gold">${pctRecaudo}%</div><div class="sub">${fmt(totalRecaudado)} de ${fmt(totalEsperado)}</div></div>
+    <div class="stat-card"><div class="label">Clientes en mora</div><div class="value red">${conteo.mora1+conteo.moraHasta10+conteo.moraTardia}</div><div class="sub">de ${totalCartera} totales</div></div>
+    <div class="stat-card"><div class="label">Próximos a vencer</div><div class="value orange">${conteo.pendienteFuturo}</div><div class="sub">vencen pronto</div></div>
+    <div class="stat-card"><div class="label">Pago anticipado/puntual</div><div class="value green">${conteo.anticipado+conteo.puntual}</div><div class="sub">cumplieron a tiempo</div></div>
+  `;
+
+  // Progreso de meta general
+  const metaColor=pctRecaudo>=70?'var(--green)':pctRecaudo>=40?'var(--gold)':'var(--red)';
+  document.getElementById('metaProgressWrap').innerHTML=`
+    <div class="goal-bar-wrap">
+      <div class="goal-bar-head"><span>Recaudo del mes</span><span style="color:${metaColor};font-weight:700;">${pctRecaudo}%</span></div>
+      <div class="goal-bar-track"><div class="goal-bar-fill" style="width:${Math.min(100,pctRecaudo)}%;background:${metaColor};"></div></div>
+    </div>
+    <div style="font-size:12px;color:var(--text2);">Modelo esperado: 20% paga antes de la fecha, 40% el día de pago, 10% se recupera el día 1 de mora, 10% se recupera hasta el día 10 de mora. El resto se sigue gestionando pero no es prioridad. Tasa de costo aplicada: ~30% por periodos de 8 a 15 días.</div>
+  `;
+
+  // Distribución esperada vs real
+  const totalClasif=Object.values(conteo).reduce((a,b)=>a+b,0)||1;
+  const real={
+    anticipado:conteo.anticipado/totalClasif,
+    puntual:conteo.puntual/totalClasif,
+    mora1:conteo.mora1/totalClasif,
+    moraHasta10:conteo.moraHasta10/totalClasif
+  };
+  document.getElementById('metaDistribucion').innerHTML=`
+    <div class="goal-stage-grid">
+      <div class="goal-stage-card"><div class="gs-label">Anticipado</div><div class="gs-pct green">${(real.anticipado*100).toFixed(0)}%</div><div class="gs-sub">Meta: 20% · ${conteo.anticipado} clientes</div></div>
+      <div class="goal-stage-card"><div class="gs-label">Día de pago</div><div class="gs-pct gold">${(real.puntual*100).toFixed(0)}%</div><div class="gs-sub">Meta: 40% · ${conteo.puntual} clientes</div></div>
+      <div class="goal-stage-card"><div class="gs-label">Mora día 1</div><div class="gs-pct orange">${(real.mora1*100).toFixed(0)}%</div><div class="gs-sub">Meta: 10% · ${conteo.mora1} clientes</div></div>
+      <div class="goal-stage-card"><div class="gs-label">Mora hasta día 10</div><div class="gs-pct red">${(real.moraHasta10*100).toFixed(0)}%</div><div class="gs-sub">Meta: 10% · ${conteo.moraHasta10} clientes</div></div>
+      <div class="goal-stage-card"><div class="gs-label">Mora tardía (no prioridad)</div><div class="gs-pct" style="color:var(--text3);">${conteo.moraTardia}</div><div class="gs-sub">Gestión secundaria</div></div>
+    </div>
+  `;
+
+  // Alertas
+  let alertasHTML='';
+  const enMora=clientes.filter(c=>{const e=clasificarEtapaPago(c,hoy);return(e==='mora1'||e==='moraHasta10'||e==='moraTardia')&&c.estado!=='cobrado';});
+  const proxVencer=clientes.filter(c=>{
+    if(!c.fechaCobro||c.estado==='cobrado')return false;
+    const diff=Math.floor((new Date(c.fechaCobro)-hoy)/86400000);
+    return diff>=0&&diff<=2;
+  });
+  const lkVencidos=lukero.filter(c=>c.estadoCredito==='vencido');
+
+  enMora.forEach(c=>{
+    const diff=Math.floor((hoy-new Date(c.fechaCobro))/86400000);
+    alertasHTML+=`<div class="alert-item alert-mora">
+      <span class="alert-icon">🚨</span>
+      <div class="alert-text"><div class="at-title">${c.nombre} — ${diff} día(s) en mora</div><div class="at-sub">${fmt(c.capital)} · venció ${c.fechaCobro}</div></div>
+      <div class="alert-actions">${c.wa?`<a href="https://wa.me/${c.wa.replace(/\D/g,'')}" target="_blank" class="btn-sm btn-primary" style="text-decoration:none;font-size:11px;">WhatsApp</a>`:''}<button class="btn-sm btn-ghost" style="font-size:11px;" onclick="verDetalle('${c.id}','cliente')">Ver</button></div>
+    </div>`;
+  });
+  proxVencer.forEach(c=>{
+    const diff=Math.floor((new Date(c.fechaCobro)-hoy)/86400000);
+    alertasHTML+=`<div class="alert-item alert-vencer">
+      <span class="alert-icon">⏰</span>
+      <div class="alert-text"><div class="at-title">${c.nombre} — vence en ${diff===0?'hoy':diff+' día(s)'}</div><div class="at-sub">${fmt(c.capital)} · ${c.fechaCobro}</div></div>
+      <div class="alert-actions">${c.wa?`<a href="https://wa.me/${c.wa.replace(/\D/g,'')}" target="_blank" class="btn-sm btn-primary" style="text-decoration:none;font-size:11px;">WhatsApp</a>`:''}<button class="btn-sm btn-ghost" style="font-size:11px;" onclick="verDetalle('${c.id}','cliente')">Ver</button></div>
+    </div>`;
+  });
+  lkVencidos.forEach(c=>{
+    alertasHTML+=`<div class="alert-item alert-mora">
+      <span class="alert-icon">⚡</span>
+      <div class="alert-text"><div class="at-title">${c.nombre} — crédito Lukero vencido</div><div class="at-sub">${fmt(c.capitalActivo)} · Nivel ${c.nivel}</div></div>
+      <div class="alert-actions"><button class="btn-sm btn-ghost" style="font-size:11px;" onclick="verDetalle('${c.id}','lukero')">Ver</button></div>
+    </div>`;
+  });
+  if(pctRecaudo<40&&totalEsperado>0){
+    alertasHTML+=`<div class="alert-item alert-meta">
+      <span class="alert-icon">📉</span>
+      <div class="alert-text"><div class="at-title">Meta de recaudo por debajo del 40%</div><div class="at-sub">Recaudo actual: ${pctRecaudo}% · Revisar gestión de cobranza</div></div>
+    </div>`;
+  }
+  document.getElementById('alertasList').innerHTML=alertasHTML||'<p style="color:var(--text3);font-size:13px;">✅ Sin alertas activas en este momento</p>';
+}
+
+
+function fmt(n){return new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',minimumFractionDigits:0}).format(Number(n)||0);}
+function showToast(msg,type=''){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show '+(type==='error'?'error':type==='warn'?'warn':'');setTimeout(()=>t.classList.remove('show'),3000);}
+function closeModal(id){document.getElementById(id).style.display='none';}
+function switchTab(tab,modalId){
+  const allTabs=['tabInfo','tabCredito','tabContacto','tabUbicacion'];
+  allTabs.forEach(t=>{const el=document.getElementById(t);if(el)el.style.display='none';});
+  const el=document.getElementById(tab);if(el)el.style.display='';
+  const tabs=document.querySelectorAll('#'+modalId+' .tab');
+  const idx=allTabs.indexOf(tab);
+  tabs.forEach((t,i)=>t.classList.toggle('active',i===idx));
+}
+</script>
+</body>
+</html>

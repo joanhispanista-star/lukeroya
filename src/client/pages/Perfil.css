@@ -1,0 +1,11 @@
+.perf-hero { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:24px; margin-bottom:12px; text-align:center; }
+.perf-avatar { font-size:52px; margin-bottom:8px; }
+.perf-nom { font-family:'Syne',sans-serif; font-size:20px; font-weight:800; }
+.perf-sub { font-size:13px; color:var(--text2); margin:2px 0 8px; }
+.perf-badge { display:inline-block; background:rgba(245,197,24,.12); color:var(--gold); border:1px solid rgba(245,197,24,.2); border-radius:20px; padding:4px 14px; font-size:12px; font-weight:700; }
+.perf-row { display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--border); font-size:13px; }
+.perf-row:last-child { border-bottom:none; }
+.perf-k { color:var(--text2); }
+.perf-v { font-weight:600; }
+.btn-logout-big { width:100%; padding:14px; background:transparent; border:1px solid var(--red); border-radius:12px; color:var(--red); font-family:'Outfit',sans-serif; font-size:14px; cursor:pointer; margin-top:8px; transition:all .2s; }
+.btn-logout-big:active { background:rgba(239,68,68,.1); }
