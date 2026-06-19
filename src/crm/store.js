@@ -1,28 +1,52 @@
 import { create } from 'zustand'
-import { CRM_CREDS } from '../shared/constants'
-import { loadSolicitudes, saveSolicitudes } from '../shared/storage'
+
+const api = (path, opts = {}) =>
+  fetch('/api' + path, {
+    headers: { 'Content-Type': 'application/json' },
+    ...opts,
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+  }).then(r => r.json())
 
 const useCrmStore = create((set, get) => ({
   user: null,
   view: 'dashboard',
+  solicitudes: [],
+  clientes: [],
 
-  login(rol, user, pass) {
-    const cred = CRM_CREDS[rol]
-    if (!cred || cred.user !== user || cred.pass !== pass) return 'Credenciales incorrectas'
-    set({ user: cred, view: 'dashboard' })
-    return null
+  async login(user, pass) {
+    try {
+      const data = await api('/crm/login', { method: 'POST', body: { user, pass } })
+      if (data.error) return data.error
+      set({ user: data, view: 'dashboard' })
+      return null
+    } catch { return 'Error de conexión' }
   },
 
-  logout() { set({ user: null, view: 'dashboard' }) },
+  logout() {
+    set({ user: null, view: 'dashboard', solicitudes: [], clientes: [] })
+  },
 
   goTo(view) { set({ view }) },
 
-  getSolicitudes() { return loadSolicitudes() },
+  async fetchSolicitudes() {
+    try {
+      const data = await api('/solicitudes')
+      if (Array.isArray(data)) set({ solicitudes: data })
+    } catch (e) { console.error('fetchSolicitudes:', e) }
+  },
 
-  updateSolicitud(id, changes) {
-    const sols = loadSolicitudes().map(s => s.id === id ? { ...s, ...changes } : s)
-    saveSolicitudes(sols)
-    set({}) // trigger re-render
+  async fetchClientes() {
+    try {
+      const data = await api('/users')
+      if (Array.isArray(data)) set({ clientes: data })
+    } catch (e) { console.error('fetchClientes:', e) }
+  },
+
+  async updateSolicitud(id, changes) {
+    try {
+      await api(`/solicitudes/${id}`, { method: 'PATCH', body: changes })
+      get().fetchSolicitudes()
+    } catch (e) { console.error('updateSolicitud:', e) }
   },
 }))
 

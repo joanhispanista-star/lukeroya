@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import useClientStore from '../store'
 import { TYC_HTML } from '../../shared/constants'
 import './KYC.css'
@@ -14,6 +14,7 @@ export default function KYC({ pendingUser, onBack }) {
   const [tc3, setTc3] = useState(false)
   const [err, setErr] = useState('')
   const [sent, setSent] = useState({ wa: false, em: false })
+  const [loading, setLoading] = useState(false)
 
   function sendOTP(type) {
     const code = Math.floor(100000 + Math.random() * 900000).toString()
@@ -42,6 +43,14 @@ export default function KYC({ pendingUser, onBack }) {
     })
   }
 
+  async function handleFinish() {
+    setLoading(true)
+    setErr('')
+    const error = await finishKYC({ ...pendingUser, email })
+    setLoading(false)
+    if (error) setErr(error)
+  }
+
   const OtpRow = ({ prefix }) => (
     <div className="otpr">
       {[0,1,2,3,4,5].map(i => (
@@ -54,14 +63,13 @@ export default function KYC({ pendingUser, onBack }) {
   )
 
   const steps = [
-    // 0: foto cédula
     <div key={0} className="kstep">
       <div className="kstep-title">Foto de tu cédula</div>
       <div className="kstep-sub">Parte frontal con nombre y número visibles.</div>
       <div className="ubx"><div className="uico">🪪</div><div><div className="uptit">Cédula (frente)</div><div className="upsub">JPG o PNG</div></div></div>
       <button className="btn" style={{ marginTop: 12 }} onClick={() => setStep(1)}>Continuar →</button>
     </div>,
-    // 1: selfie
+
     <div key={1} className="kstep">
       <div className="kstep-title">Selfie con cédula</div>
       <div className="kstep-sub">Foto con cara + cédula visibles.</div>
@@ -69,7 +77,7 @@ export default function KYC({ pendingUser, onBack }) {
       <button className="btn" style={{ marginTop: 12 }} onClick={() => setStep(2)}>Continuar →</button>
       <button className="btn-ghost" onClick={() => setStep(0)}>← Atrás</button>
     </div>,
-    // 2: OTP WhatsApp
+
     <div key={2} className="kstep">
       <div className="kstep-title">Verifica tu WhatsApp</div>
       <div className="kstep-sub">Enviamos un código a <strong style={{ color:'var(--gold)' }}>{pendingUser.tel}</strong></div>
@@ -82,7 +90,7 @@ export default function KYC({ pendingUser, onBack }) {
       {err && <div className="err">{err}</div>}
       <button className="btn-ghost" onClick={() => setStep(1)}>← Atrás</button>
     </div>,
-    // 3: OTP email
+
     <div key={3} className="kstep">
       <div className="kstep-title">Verifica tu correo</div>
       <div className="kstep-sub">Ingresa tu correo para recibir el código.</div>
@@ -96,16 +104,18 @@ export default function KYC({ pendingUser, onBack }) {
       {err && <div className="err">{err}</div>}
       <button className="btn-ghost" onClick={() => setStep(2)}>← Atrás</button>
     </div>,
-    // 4: T&C
+
     <div key={4} className="kstep">
       <div className="kstep-title">Términos y condiciones</div>
       <div className="tcscr" dangerouslySetInnerHTML={{ __html: TYC_HTML }} />
       <label className="tcck"><input type="checkbox" checked={tc1} onChange={e => setTc1(e.target.checked)} /><span>He leído y acepto los <strong>Términos y Condiciones</strong></span></label>
       <label className="tcck"><input type="checkbox" checked={tc2} onChange={e => setTc2(e.target.checked)} /><span>Autorizo el <strong>tratamiento de mis datos personales</strong> (Ley 1581)</span></label>
       <label className="tcck"><input type="checkbox" checked={tc3} onChange={e => setTc3(e.target.checked)} /><span>La información suministrada es <strong>verídica</strong></span></label>
-      <button className="btn" disabled={!tc1||!tc2||!tc3} style={{ opacity: tc1&&tc2&&tc3 ? 1 : .5 }}
-        onClick={() => finishKYC({ ...pendingUser, email })}>
-        COMPLETAR REGISTRO
+      {err && <div className="err">{err}</div>}
+      <button className="btn" disabled={!tc1||!tc2||!tc3||loading}
+        style={{ opacity: tc1&&tc2&&tc3 ? 1 : .5 }}
+        onClick={handleFinish}>
+        {loading ? 'Registrando...' : 'COMPLETAR REGISTRO'}
       </button>
     </div>,
   ]

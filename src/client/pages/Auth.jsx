@@ -1,32 +1,32 @@
 import { useState } from 'react'
 import useClientStore from '../store'
-import { loadUsers } from '../../shared/storage'
 import KYC from './KYC'
 import './Auth.css'
 
 export default function Auth() {
-  const { login, showToast } = useClientStore()
+  const { login } = useClientStore()
   const [tab, setTab] = useState('login')
   const [pending, setPending] = useState(null)
   const [err, setErr] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  // Login
   const [ced, setCed] = useState('')
-  const [pw, setPw] = useState('')
+  const [pw, setPw]   = useState('')
 
-  // Register
   const [rNom, setRNom] = useState('')
   const [rCed, setRCed] = useState('')
   const [rTel, setRTel] = useState('')
   const [rCiu, setRCiu] = useState('')
-  const [rPw, setRPw] = useState('')
+  const [rPw,  setRPw]  = useState('')
   const [rPw2, setRPw2] = useState('')
 
-  function doLogin(e) {
+  async function doLogin(e) {
     e?.preventDefault()
     setErr('')
     if (!ced || !pw) { setErr('Completa todos los campos'); return }
-    const error = login(ced, pw)
+    setLoading(true)
+    const error = await login(ced, pw)
+    setLoading(false)
     if (error) setErr(error)
   }
 
@@ -35,15 +35,8 @@ export default function Auth() {
     setErr('')
     if (!rNom || !rCed || !rTel || !rPw) { setErr('Completa todos los campos'); return }
     if (rPw.length < 6) { setErr('Contraseña mínimo 6 caracteres'); return }
-    if (rPw !== rPw2) { setErr('Las contraseñas no coinciden'); return }
-    const users = loadUsers()
-    if (users.find(u => u.cedula === rCed)) { setErr('Ya existe una cuenta con esa cédula'); return }
-    const newUser = {
-      cedula: rCed, pass: rPw, nombre: rNom, tel: rTel, ciudad: rCiu,
-      nivel: 1, puntos: 0, creds: 0, historial: [], creditoActivo: null,
-      fechaReg: new Date().toLocaleDateString('es-CO'), sc: {},
-    }
-    setPending(newUser)
+    if (rPw !== rPw2)   { setErr('Las contraseñas no coinciden'); return }
+    setPending({ cedula: rCed, pass: rPw, nombre: rNom, tel: rTel, ciudad: rCiu })
   }
 
   if (pending) return <KYC pendingUser={pending} onBack={() => setPending(null)} />
@@ -57,7 +50,7 @@ export default function Auth() {
       <div className="auth-card">
         <div className="atabs">
           <button className={`atab${tab === 'login' ? ' on' : ''}`} onClick={() => { setTab('login'); setErr('') }}>Ingresar</button>
-          <button className={`atab${tab === 'reg' ? ' on' : ''}`} onClick={() => { setTab('reg'); setErr('') }}>Registrarse</button>
+          <button className={`atab${tab === 'reg'   ? ' on' : ''}`} onClick={() => { setTab('reg');   setErr('') }}>Registrarse</button>
         </div>
 
         {tab === 'login' ? (
@@ -68,7 +61,7 @@ export default function Auth() {
             <div className="field"><label>Contraseña</label>
               <input type="password" value={pw} onChange={e => setPw(e.target.value)} placeholder="••••••" />
             </div>
-            <button className="btn" type="submit">INGRESAR</button>
+            <button className="btn" type="submit" disabled={loading}>{loading ? 'Ingresando...' : 'INGRESAR'}</button>
             {err && <div className="err">{err}</div>}
             <div className="auth-foot">¿Nuevo? Usa la pestaña Registrarse</div>
           </form>

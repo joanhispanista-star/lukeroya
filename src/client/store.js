@@ -1,7 +1,13 @@
 import { create } from 'zustand'
-import { NV, PTS_NIVEL, PTS_PUNTUAL, PTS_ANTICIPADO, PTS_PRORROGA } from '../shared/constants'
-import { loadUsers, saveUsers, loadSolicitudes, saveSolicitudes } from '../shared/storage'
+import { NV, PTS_NIVEL, PTS_PUNTUAL, PTS_ANTICIPADO } from '../shared/constants'
 import { ptsEnNivel } from '../shared/utils'
+
+const api = (path, opts = {}) =>
+  fetch('/api' + path, {
+    headers: { 'Content-Type': 'application/json' },
+    ...opts,
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+  }).then(r => r.json())
 
 const useClientStore = create((set, get) => ({
   user: null,
@@ -9,29 +15,35 @@ const useClientStore = create((set, get) => ({
   toast: null,
   moreOpen: false,
 
-  login(cedula, pass) {
-    const users = loadUsers()
-    const u = users.find(u => u.cedula === cedula && u.pass === pass)
-    if (!u) return 'Cédula o contraseña incorrectos'
-    set({ user: u, screen: 'home' })
-    return null
+  async login(cedula, password) {
+    try {
+      const data = await api('/auth/login', { method: 'POST', body: { cedula, password } })
+      if (data.error) return data.error
+      set({ user: data, screen: 'home' })
+      return null
+    } catch { return 'Error de conexión' }
   },
 
   logout() {
     set({ user: null, screen: 'home', moreOpen: false })
   },
 
-  register(data) {
-    const users = loadUsers()
-    if (users.find(u => u.cedula === data.cedula)) return 'Ya existe una cuenta con esa cédula'
-    return null
-  },
-
-  finishKYC(pendingUser) {
-    const users = loadUsers()
-    const newUser = { ...pendingUser, kycDone: true }
-    saveUsers([...users, newUser])
-    set({ user: newUser, screen: 'home' })
+  async finishKYC(pendingUser) {
+    try {
+      const data = await api('/auth/register', {
+        method: 'POST',
+        body: {
+          cedula: pendingUser.cedula,
+          password: pendingUser.pass,
+          nombre: pendingUser.nombre,
+          email: pendingUser.email || '',
+          telefono: pendingUser.tel || '',
+        },
+      })
+      if (data.error) return data.error
+      set({ user: data, screen: 'home' })
+      return null
+    } catch { return 'Error de conexión' }
   },
 
   nav(screen) {
@@ -43,22 +55,26 @@ const useClientStore = create((set, get) => ({
     setTimeout(() => set({ toast: null }), 3000)
   },
 
-  toggleMore() {
-    set(s => ({ moreOpen: !s.moreOpen }))
-  },
+  toggleMore() { set(s => ({ moreOpen: !s.moreOpen })) },
+  closeMore()  { set({ moreOpen: false }) },
 
-  closeMore() {
-    set({ moreOpen: false })
-  },
-
-  saveUser() {
-    const { user } = get()
+  async saveUser(updated) {
+    const user = updated || get().user
     if (!user) return
-    const users = loadUsers()
-    const i = users.findIndex(u => u.cedula === user.cedula)
-    if (i >= 0) users[i] = user
-    else users.push(user)
-    saveUsers(users)
+    set({ user })
+    try {
+      await api(`/users/${user.cedula}`, {
+        method: 'PUT',
+        body: {
+          nivel: user.nivel, puntos: user.puntos, creds: user.creds,
+          kyc: user.kyc, social: user.social || {},
+          credito_activo: user.creditoActivo || null,
+          historial: user.historial || [],
+          nombre: user.nombre, email: user.email || '',
+          telefono: user.telefono || user.tel || '',
+        },
+      })
+    } catch (e) { console.error('saveUser:', e) }
   },
 
   addPuntos(tipo) {
@@ -72,28 +88,26 @@ const useClientStore = create((set, get) => ({
       updated.nivel++
       showToast(`🎉 ¡Subiste al nivel ${updated.nivel}! ${NV[updated.nivel - 1].nom}`)
     }
-    set({ user: updated })
-    saveUser()
+    saveUser(updated)
   },
 
   claimSocial(red, pts) {
     const { user, showToast, saveUser } = get()
     if (!user) return
-    if (user.sc?.[red]) { showToast('Ya reclamaste esta red 👍'); return }
+    if (user.social?.[red]) { showToast('Ya reclamaste esta red 👍'); return }
     const updated = {
       ...user,
       puntos: (user.puntos || 0) + pts,
-      sc: { ...user.sc, [red]: true },
+      social: { ...user.social, [red]: true },
     }
-    set({ user: updated })
-    saveUser()
+    saveUser(updated)
     showToast(`+${pts} puntos ganados! 🎉`)
   },
 
-  submitSolicitud(sol) {
-    const sols = loadSolicitudes()
-    sols.push(sol)
-    saveSolicitudes(sols)
+  async submitSolicitud(sol) {
+    try {
+      await api('/solicitudes', { method: 'POST', body: sol })
+    } catch (e) { console.error('submitSolicitud:', e) }
   },
 }))
 

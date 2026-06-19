@@ -1,6 +1,4 @@
-import { useEffect } from 'react'
 import useClientStore from './store'
-import { seedDemo } from '../shared/storage'
 import Auth from './pages/Auth'
 import Home from './pages/Home'
 import Credito from './pages/Credito'
@@ -29,8 +27,6 @@ const CHAT_SCREENS = ['luka', 'finn']
 
 export default function ClientApp() {
   const { user, screen } = useClientStore()
-
-  useEffect(() => { seedDemo() }, [])
 
   if (!user) return (
     <div className="theme-client client-shell">

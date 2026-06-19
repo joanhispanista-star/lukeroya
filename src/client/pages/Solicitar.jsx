@@ -2,34 +2,37 @@ import { useState } from 'react'
 import useClientStore from '../store'
 import { NV } from '../../shared/constants'
 import { fmtCOP, capsDisp, calcCredito } from '../../shared/utils'
-import { loadSolicitudes, saveSolicitudes } from '../../shared/storage'
 import './Solicitar.css'
 
 export default function Solicitar() {
-  const { user, nav, showToast } = useClientStore()
+  const { user, nav, showToast, submitSolicitud } = useClientStore()
   const [done, setDone] = useState(false)
   const [okMsg, setOkMsg] = useState('')
+  const [loading, setLoading] = useState(false)
   if (!user) return null
 
-  const nv = NV[user.nivel - 1]
+  const nv   = NV[user.nivel - 1]
   const caps = capsDisp(nv, user.puntos || 0)
   const [selCap, setSelCap] = useState(caps[0]?.m || nv.caps[0].m)
   const calc = calcCredito(selCap, user.nivel)
 
-  function handleSolicitar() {
-    const fd = new Date().toLocaleDateString('es-CO')
+  async function handleSolicitar() {
+    setLoading(true)
     const sol = {
-      id: 'sol_' + Date.now(),
-      nombre: user.nombre, cedula: user.cedula, tel: user.tel,
-      ciudad: user.ciudad || '', nivel: user.nivel,
-      capitalActivo: selCap, totalPagar: calc.total,
-      estado: 'activo', fuente: 'Lukero App',
-      fechaDesembolso: fd, fechaVence: calc.fechaVence.toLocaleDateString('es-CO'),
-      puntos: user.puntos, creditosCompletados: user.creds || 0,
-      timestamp: new Date().toISOString(),
+      id:         'sol_' + Date.now(),
+      cedula:     user.cedula,
+      nombre:     user.nombre,
+      monto:      selCap,
+      plazo:      calc.dias,
+      tasa:       nv.tasa,
+      totalPagar: calc.total,
+      fechaVence: calc.fechaVence.toLocaleDateString('es-CO'),
+      capital:    selCap,
+      nivel:      user.nivel,
+      estado:     'pendiente',
     }
-    const sols = loadSolicitudes()
-    saveSolicitudes([...sols, sol])
+    await submitSolicitud(sol)
+    setLoading(false)
     setOkMsg(`Tu solicitud de ${fmtCOP(selCap)} fue enviada. Un asesor te contactará pronto por WhatsApp.`)
     setDone(true)
     showToast('¡Solicitud enviada! 🎉')
@@ -72,10 +75,12 @@ export default function Solicitar() {
           <div className="slbl">Datos del solicitante</div>
           <div className="perf-row"><span className="perf-k">Nombre</span><span>{user.nombre}</span></div>
           <div className="perf-row"><span className="perf-k">Cédula</span><span>{user.cedula}</span></div>
-          <div className="perf-row"><span className="perf-k">Teléfono</span><span>{user.tel}</span></div>
+          <div className="perf-row"><span className="perf-k">Teléfono</span><span>{user.telefono || user.tel || '-'}</span></div>
           <div className="perf-row"><span className="perf-k">Nivel</span><span>N{user.nivel} · {nv.nom}</span></div>
         </div>
-        <button className="btna" onClick={handleSolicitar}>CONFIRMAR SOLICITUD ›</button>
+        <button className="btna" onClick={handleSolicitar} disabled={loading}>
+          {loading ? 'Enviando...' : 'CONFIRMAR SOLICITUD ›'}
+        </button>
         <div style={{ fontSize:11,color:'var(--text3)',textAlign:'center',marginTop:8 }}>Un asesor revisará y desembolsará en minutos</div>
       </div>
     </div>
