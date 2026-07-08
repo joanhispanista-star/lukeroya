@@ -48,7 +48,7 @@ TONO: Español colombiano informal, empático, directo, max 4 oraciones.`
       const r = await fetch('/api/claude', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:700, system:getSysPrompt(), messages:newHistory.slice(-8) })
+        body: JSON.stringify({ model:'claude-sonnet-5', max_tokens:700, thinking:{ type:'disabled' }, system:getSysPrompt(), messages:newHistory.slice(-8) })
       })
       if (!r.ok) throw new Error(`HTTP ${r.status}`)
       const d = await r.json()
