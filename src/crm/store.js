@@ -12,6 +12,7 @@ const useCrmStore = create((set, get) => ({
   view: 'dashboard',
   solicitudes: [],
   clientes: [],
+  comentarios: [],
 
   async login(user, pass) {
     try {
@@ -40,6 +41,13 @@ const useCrmStore = create((set, get) => ({
       const data = await api('/users')
       if (Array.isArray(data)) set({ clientes: data })
     } catch (e) { console.error('fetchClientes:', e) }
+  },
+
+  async fetchComentarios() {
+    try {
+      const data = await api('/comentarios')
+      if (Array.isArray(data)) set({ comentarios: data })
+    } catch (e) { console.error('fetchComentarios:', e) }
   },
 
   async updateSolicitud(id, changes) {

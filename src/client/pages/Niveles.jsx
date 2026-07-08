@@ -51,8 +51,7 @@ export default function Niveles() {
               <div key={n.n} className={`niv-card ${state}`}>
                 <div className="niv-card-n">N{n.n}</div>
                 <div className="niv-card-nom">{n.nom}</div>
-                <div className="niv-card-cap">{fmtCOP(n.caps[0].m)}</div>
-                <div className="niv-card-tasa">{Math.round(n.tasa*100)}%</div>
+                <div className="niv-card-cap">Hasta {fmtCOP(n.caps[0].m)}</div>
               </div>
             )
           })}

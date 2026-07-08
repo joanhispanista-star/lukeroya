@@ -53,3 +53,29 @@ export function calcCredito(capital, nivel, prorroga = 0) {
 
   return { capital, total, interes, poliza, tech, admin, dias, fechaVence }
 }
+
+// Desglose por servicios (sin mostrar porcentaje al cliente).
+//  • Base (interés + tecnología): no supera ~12% del capital en N1, baja por nivel.
+//  • Extra (administración + seguro): ~18% en N1. Se EXONERA si el cliente aporta
+//    2 codeudores con documentos y contrato firmado que garantice el pago.
+export function calcDesglose(capital, nivel, { conCodeudores = false, prorroga = 0 } = {}) {
+  const nv = NV[nivel - 1]
+  const tasa = nv.tasa
+  const dias = 8 + prorroga * 3
+
+  const base  = tasa * 0.40                       // interés + tecnología
+  const extra = conCodeudores ? 0 : tasa * 0.60   // admin + seguro (exonerable)
+
+  const interes    = Math.round(capital * base  * 0.60)
+  const tecnologia = Math.round(capital * base  * 0.40)
+  const admin      = Math.round(capital * extra * 0.45)
+  const seguro     = Math.round(capital * extra * 0.55)
+
+  const cobro = interes + tecnologia + admin + seguro
+  const total = capital + cobro
+
+  const fechaVence = new Date()
+  fechaVence.setDate(fechaVence.getDate() + dias)
+
+  return { capital, interes, tecnologia, admin, seguro, cobro, total, dias, fechaVence, conCodeudores }
+}

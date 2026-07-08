@@ -27,7 +27,7 @@
 }
 .mbtn:active { border-color: var(--gold); color: var(--gold); }
 .wa-btn {
-  position: fixed; bottom: 86px; right: 14px;
+  position: fixed; bottom: 172px; right: 14px;
   width: 48px; height: 48px; border-radius: 50%;
   background: #25D366; border: none;
   display: flex; align-items: center; justify-content: center;

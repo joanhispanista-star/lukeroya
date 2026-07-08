@@ -6,10 +6,13 @@ const NAV = [
     { key:'dashboard',    icon:'📊', label:'Dashboard'     },
     { key:'solicitudes',  icon:'📋', label:'Solicitudes'   },
     { key:'clientes',     icon:'👥', label:'Clientes'      },
+    { key:'comunidad',    icon:'⭐', label:'Comunidad'     },
   ]},
   { section:'Herramientas', items:[
-    { key:'mapa',         icon:'🗺️', label:'Mapa'          },
-    { key:'exportar',     icon:'📤', label:'Exportar'      },
+    { key:'calculadora',     icon:'🧮', label:'Calculadora'    },
+    { key:'contrapropuesta', icon:'📝', label:'Contrapropuesta' },
+    { key:'mapa',            icon:'🗺️', label:'Mapa'           },
+    { key:'exportar',        icon:'📤', label:'Exportar'       },
   ]},
 ]
 

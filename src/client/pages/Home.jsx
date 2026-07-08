@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import useClientStore from '../store'
 import { NV } from '../../shared/constants'
-import { fmtCOP, capsDisp, capMax } from '../../shared/utils'
+import { fmtCOP, capsDisp, calcDesglose } from '../../shared/utils'
 import './Home.css'
 
 export default function Home() {
@@ -9,13 +9,12 @@ export default function Home() {
   const nivel = NV[(user?.nivel || 1) - 1]
   const [selNiv, setSelNiv] = useState(user?.nivel || 1)
   const [selCap, setSelCap] = useState(NV[(user?.nivel||1)-1].caps[0].m)
+  const [conCodeudores, setConCodeudores] = useState(false)
 
   const nv = NV[selNiv - 1]
   const puntos = user?.puntos || 0
   const caps = capsDisp(nv, puntos)
-  const tasa = nv.tasa
-  const total = Math.round(selCap * (1 + tasa))
-  const diasBase = 8
+  const d = calcDesglose(selCap, selNiv, { conCodeudores })
 
   return (
     <div className="screen-inner">
@@ -64,10 +63,18 @@ export default function Home() {
           </div>
           <div className="res-box">
             <div className="res-row"><span>Capital</span><span>{fmtCOP(selCap)}</span></div>
-            <div className="res-row"><span>Costo total ({Math.round(tasa*100)}%)</span><span>+{fmtCOP(Math.round(selCap*tasa))}</span></div>
-            <div className="res-row total"><span>Total a pagar</span><span>{fmtCOP(total)}</span></div>
-            <div className="res-row"><span>Plazo</span><span>{diasBase} días</span></div>
+            <div className="res-row"><span>Interés</span><span>+{fmtCOP(d.interes)}</span></div>
+            <div className="res-row"><span>Tecnología</span><span>+{fmtCOP(d.tecnologia)}</span></div>
+            {!conCodeudores && <div className="res-row"><span>Administración</span><span>+{fmtCOP(d.admin)}</span></div>}
+            {!conCodeudores && <div className="res-row"><span>Seguro</span><span>+{fmtCOP(d.seguro)}</span></div>}
+            <div className="res-row total"><span>Total a pagar</span><span>{fmtCOP(d.total)}</span></div>
+            <div className="res-row"><span>Plazo</span><span>{d.dias} días</span></div>
           </div>
+          <label className="codeu">
+            <input type="checkbox" checked={conCodeudores} onChange={e => setConCodeudores(e.target.checked)} />
+            <span>Tengo <strong>2 codeudores</strong> con documentos y contrato firmado — <em>sin administración ni seguro</em></span>
+          </label>
+          {conCodeudores && <div className="codeu-note">📎 Un asesor validará los documentos de tus 2 codeudores antes de aprobar.</div>}
           {nv.pr && <div className="prr-note">💡 Hasta 2 prórrogas de +3 días disponibles</div>}
           <button className="btna" onClick={() => nav('sol')}>SOLICITAR AHORA ›</button>
         </div>
@@ -91,6 +98,21 @@ export default function Home() {
               <div key={t} className="mp"><div className="mi">{i}</div><div className="mt">{t}</div></div>
             ))}
           </div>
+        </div>
+
+        {/* Tesoro / diseño de lujo */}
+        <div className="lux">
+          <div className="lux-scan" />
+          <div className="lux-title">✦ Mientras más subes, más desbloqueas ✦</div>
+          <div className="lux-treasure">
+            <span className="tz gem" />
+            <span className="tz coin" />
+            <span className="tz bar" />
+            <span className="tz coin" />
+            <span className="tz gem" />
+          </div>
+          <div className="lux-sub">Oro, plata y diamantes — cada nivel te da <strong>mejores condiciones</strong>.</div>
+          <button className="btna lux-btn" onClick={() => nav('niv')}>VER MIS NIVELES ›</button>
         </div>
       </div>
     </div>

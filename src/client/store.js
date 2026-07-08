@@ -14,6 +14,7 @@ const useClientStore = create((set, get) => ({
   screen: 'home',
   toast: null,
   moreOpen: false,
+  comentarios: [],
 
   async login(cedula, password) {
     try {
@@ -108,6 +109,22 @@ const useClientStore = create((set, get) => ({
     try {
       await api('/solicitudes', { method: 'POST', body: sol })
     } catch (e) { console.error('submitSolicitud:', e) }
+  },
+
+  async fetchComentarios() {
+    try {
+      const d = await api('/comentarios')
+      if (Array.isArray(d)) set({ comentarios: d })
+    } catch (e) { console.error('fetchComentarios:', e) }
+  },
+
+  async submitComentario(c) {
+    try {
+      const d = await api('/comentarios', { method: 'POST', body: c })
+      if (d.error) return d.error
+      get().fetchComentarios()
+      return null
+    } catch { return 'Error de conexión' }
   },
 }))
 

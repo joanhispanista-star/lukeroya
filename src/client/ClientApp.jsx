@@ -10,17 +10,19 @@ import Red from './pages/Red'
 import Perfil from './pages/Perfil'
 import Solicitar from './pages/Solicitar'
 import Nosotros from './pages/Nosotros'
+import Comunidad from './pages/Comunidad'
 import TyC from './pages/TyC'
 import BottomNav from './components/BottomNav'
 import MoreSheet from './components/MoreSheet'
 import Toast from './components/Toast'
+import Mascota from './components/Mascota'
 import './client.css'
 
 const SCREENS = {
   home: Home, cred: Credito, hist: Historial,
   niv: Niveles, luka: Luka, finn: Finn,
   red: Red, perfil: Perfil, sol: Solicitar,
-  nos: Nosotros, tyc: TyC,
+  nos: Nosotros, comunidad: Comunidad, tyc: TyC,
 }
 
 const CHAT_SCREENS = ['luka', 'finn']
@@ -43,6 +45,7 @@ export default function ClientApp() {
         ? <Screen />
         : <div className="client-scroll"><Screen /></div>
       }
+      {!isChat && <Mascota />}
       <BottomNav />
       <MoreSheet />
       <Toast />

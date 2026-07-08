@@ -3,16 +3,22 @@ import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Solicitudes from './pages/Solicitudes'
 import Clientes from './pages/Clientes'
+import Calculadora from './pages/Calculadora'
+import Contrapropuesta from './pages/Contrapropuesta'
+import ComunidadCrm from './pages/ComunidadCrm'
 import Placeholder from './pages/Placeholder'
 import Sidebar from './components/Sidebar'
 import './crm.css'
 
 const VIEWS = {
-  dashboard:   <Dashboard />,
-  solicitudes: <Solicitudes />,
-  clientes:    <Clientes />,
-  mapa:        <Placeholder title="Mapa" icon="🗺️" />,
-  exportar:    <Placeholder title="Exportar" icon="📤" />,
+  dashboard:      <Dashboard />,
+  solicitudes:    <Solicitudes />,
+  clientes:       <Clientes />,
+  calculadora:    <Calculadora />,
+  contrapropuesta:<Contrapropuesta />,
+  comunidad:      <ComunidadCrm />,
+  mapa:           <Placeholder title="Mapa" icon="🗺️" />,
+  exportar:       <Placeholder title="Exportar" icon="📤" />,
 }
 
 export default function CrmApp() {

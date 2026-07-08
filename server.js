@@ -1,15 +1,29 @@
+require('dotenv').config()
 const express = require('express')
 const path = require('path')
-const { Pool } = require('pg')
 const bcrypt = require('bcryptjs')
+const cron = require('node-cron')
+const { enviarEventoPlaza, barrerMora, tipoPago, diasMora, tipoMoraPorDias } = require('./lib/plazaReputacion')
 
 const app = express()
 app.use(express.json())
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-})
+// Base de datos:
+//  • Con DATABASE_URL  → PostgreSQL real (Render). SSL para remotas, sin SSL para localhost.
+//  • Sin DATABASE_URL  → base EN MEMORIA (pg-mem) para desarrollo local sin instalar nada.
+const dbUrl = process.env.DATABASE_URL || ''
+let pool
+if (dbUrl) {
+  const { Pool } = require('pg')
+  const dbEsLocal = /localhost|127\.0\.0\.1/.test(dbUrl)
+  pool = new Pool({ connectionString: dbUrl, ssl: dbEsLocal ? false : { rejectUnauthorized: false } })
+  console.log('DB: PostgreSQL', dbEsLocal ? 'local' : 'remoto (Render)')
+} else {
+  const { newDb } = require('pg-mem')
+  const { Pool } = newDb().adapters.createPg()
+  pool = new Pool()
+  console.log('DB: EN MEMORIA (pg-mem) — sin DATABASE_URL. Los datos se reinician al reiniciar el servidor.')
+}
 
 const CRM_CREDS = {
   owner:   { pass: 'owner123',  rol: 'owner'  },
@@ -50,6 +64,16 @@ async function initDB() {
       prorrogas   INTEGER DEFAULT 0,
       nivel       INTEGER
     );
+    CREATE TABLE IF NOT EXISTS comentarios (
+      id          TEXT PRIMARY KEY,
+      cedula      TEXT DEFAULT '',
+      nombre      TEXT,
+      texto       TEXT NOT NULL,
+      estrellas   INTEGER DEFAULT 5,
+      red_social  TEXT DEFAULT '',
+      destacado   BOOLEAN DEFAULT FALSE,
+      fecha       TIMESTAMPTZ DEFAULT NOW()
+    );
   `)
 
   const demo = await pool.query('SELECT cedula FROM users WHERE cedula = $1', ['1234567890'])
@@ -60,6 +84,22 @@ async function initDB() {
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
       ['1234567890', hash, 'María González', 'maria@example.com', '3001234567', 3, 1500, 2, true, JSON.stringify({ ig: true, tk: false, fb: true, yt: false })]
     )
+  }
+
+  const coms = await pool.query('SELECT COUNT(*)::int AS n FROM comentarios')
+  if (coms.rows[0].n === 0) {
+    const seed = [
+      ['c_seed1', 'Carlos M.',  'Me aprobaron en 10 minutos sin vueltas ni papeleo. Ya voy en mi cuarto crédito y me subieron el cupo.', 5, '@carlosm'],
+      ['c_seed2', 'Andrea R.',  'Al principio desconfiaba, pero pagué a tiempo y todo fue transparente. Con codeudores me salió mucho más barato.', 5, '@andre.r'],
+      ['c_seed3', 'Julián P.',  'Necesitaba plata para surtir mi negocio un domingo y Lukero me salvó. Subir de nivel sí vale la pena.', 5, '@julianp'],
+      ['c_seed4', 'Diana G.',   'Excelente servicio, la app es muy fácil y Luka me resolvió todas las dudas. 100% recomendado.', 4, '@dianag'],
+    ]
+    for (const [id, nombre, texto, estrellas, red] of seed) {
+      await pool.query(
+        `INSERT INTO comentarios (id, nombre, texto, estrellas, red_social, destacado) VALUES ($1,$2,$3,$4,$5,TRUE)`,
+        [id, nombre, texto, estrellas, red]
+      )
+    }
   }
 
   console.log('DB lista')
@@ -162,7 +202,30 @@ app.patch('/api/solicitudes/:id', async (req, res) => {
     if (prorrogas !== undefined) { vals.push(prorrogas); sets.push(`prorrogas=$${vals.length}`) }
     if (!sets.length) return res.status(400).json({ error: 'Nada que actualizar' })
     const r = await pool.query(`UPDATE solicitudes SET ${sets.join(',')} WHERE id=$1 RETURNING *`, vals)
-    res.json(toSol(r.rows[0]))
+    const sol = r.rows[0]
+    res.json(toSol(sol))
+
+    // Fase 1 · Plaza: reporta el cambio de estado a la reputación (fire-and-forget,
+    // no bloquea ni rompe la respuesta). Idempotente en Plaza por referencia=id.
+    if (sol && estado === 'pagado') {
+      enviarEventoPlaza({ cedula: sol.cedula, tipo: tipoPago(sol.fecha_vence),
+        referencia: sol.id, metadata: { monto: sol.total_pagar } })
+    } else if (sol && estado === 'mora') {
+      const dias = diasMora(sol.fecha_vence)
+      enviarEventoPlaza({ cedula: sol.cedula, tipo: tipoMoraPorDias(dias) || 'mora_leve',
+        referencia: sol.id, metadata: { dias_mora: dias } })
+    }
+  } catch (e) { res.status(500).json({ error: e.message }) }
+})
+
+// Barrido de mora bajo demanda (respaldo del cron). Lo puede pegar un scheduler
+// externo (Render Cron, cron-job.org) con el header x-cron-secret.
+app.post('/api/cron/barrer-mora', async (req, res) => {
+  if (req.headers['x-cron-secret'] !== process.env.CRON_SECRET) {
+    return res.status(401).json({ error: 'No autorizado' })
+  }
+  try {
+    res.json(await barrerMora(pool))
   } catch (e) { res.status(500).json({ error: e.message }) }
 })
 
@@ -172,6 +235,29 @@ app.post('/api/crm/login', (req, res) => {
   const cred = CRM_CREDS[user]
   if (!cred || cred.pass !== pass) return res.status(401).json({ error: 'Credenciales inválidas' })
   res.json({ user, rol: cred.rol })
+})
+
+// ── COMENTARIOS / TESTIMONIOS ─────────────────────────────────
+app.get('/api/comentarios', async (req, res) => {
+  try {
+    const r = await pool.query('SELECT * FROM comentarios ORDER BY destacado DESC, fecha DESC')
+    res.json(r.rows.map(toCom))
+  } catch (e) { res.status(500).json({ error: e.message }) }
+})
+
+app.post('/api/comentarios', async (req, res) => {
+  const { cedula, nombre, texto, estrellas, redSocial } = req.body
+  if (!texto || !texto.trim()) return res.status(400).json({ error: 'El comentario está vacío' })
+  try {
+    const id = 'c_' + Date.now()
+    const est = Math.max(1, Math.min(5, parseInt(estrellas, 10) || 5))
+    const r = await pool.query(
+      `INSERT INTO comentarios (id, cedula, nombre, texto, estrellas, red_social)
+       VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
+      [id, cedula || '', nombre || 'Cliente Lukero', texto.trim().slice(0, 500), est, (redSocial || '').slice(0, 60)]
+    )
+    res.json(toCom(r.rows[0]))
+  } catch (e) { res.status(500).json({ error: e.message }) }
 })
 
 // ── AI PROXY ──────────────────────────────────────────────────
@@ -215,6 +301,20 @@ function toSol(r) {
     capital: r.capital, prorrogas: r.prorrogas, nivel: r.nivel,
   }
 }
+
+function toCom(r) {
+  return {
+    id: r.id, cedula: r.cedula, nombre: r.nombre, texto: r.texto,
+    estrellas: r.estrellas, redSocial: r.red_social,
+    destacado: r.destacado, fecha: r.fecha,
+  }
+}
+
+// Barrido diario de mora a las 06:00 (hora Colombia). En Render Free el servicio
+// puede dormir; si no corre, dispáralo con POST /api/cron/barrer-mora.
+cron.schedule('0 6 * * *', () => {
+  barrerMora(pool).catch(e => console.error('[plaza] barrido falló:', e.message))
+}, { timezone: 'America/Bogota' })
 
 const PORT = process.env.PORT || 3000
 initDB()

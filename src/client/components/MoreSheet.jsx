@@ -2,6 +2,7 @@ import useClientStore from '../store'
 import './MoreSheet.css'
 
 const ITEMS = [
+  { key:'comunidad', icon:'⭐', label:'Comunidad'          },
   { key:'hist',   icon:'📋', label:'Historial'          },
   { key:'finn',   icon:'🧠', label:'Asesor Financiero'  },
   { key:'red',    icon:'🎁', label:'Gana Puntos'        },

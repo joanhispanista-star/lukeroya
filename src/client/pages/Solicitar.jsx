@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import useClientStore from '../store'
 import { NV } from '../../shared/constants'
-import { fmtCOP, capsDisp, calcCredito } from '../../shared/utils'
+import { fmtCOP, capsDisp, calcDesglose } from '../../shared/utils'
 import './Solicitar.css'
 
 export default function Solicitar() {
@@ -14,7 +14,8 @@ export default function Solicitar() {
   const nv   = NV[user.nivel - 1]
   const caps = capsDisp(nv, user.puntos || 0)
   const [selCap, setSelCap] = useState(caps[0]?.m || nv.caps[0].m)
-  const calc = calcCredito(selCap, user.nivel)
+  const [conCodeudores, setConCodeudores] = useState(false)
+  const calc = calcDesglose(selCap, user.nivel, { conCodeudores })
 
   async function handleSolicitar() {
     setLoading(true)
@@ -29,6 +30,7 @@ export default function Solicitar() {
       fechaVence: calc.fechaVence.toLocaleDateString('es-CO'),
       capital:    selCap,
       nivel:      user.nivel,
+      codeudores: conCodeudores,
       estado:     'pendiente',
     }
     await submitSolicitud(sol)
@@ -65,11 +67,19 @@ export default function Solicitar() {
           </div>
           <div className="res-box">
             <div className="res-row"><span>Capital</span><span>{fmtCOP(selCap)}</span></div>
-            <div className="res-row"><span>Costo ({Math.round(nv.tasa*100)}%)</span><span>+{fmtCOP(calc.total-selCap)}</span></div>
+            <div className="res-row"><span>Interés</span><span>+{fmtCOP(calc.interes)}</span></div>
+            <div className="res-row"><span>Tecnología</span><span>+{fmtCOP(calc.tecnologia)}</span></div>
+            {!conCodeudores && <div className="res-row"><span>Administración</span><span>+{fmtCOP(calc.admin)}</span></div>}
+            {!conCodeudores && <div className="res-row"><span>Seguro</span><span>+{fmtCOP(calc.seguro)}</span></div>}
             <div className="res-row total"><span>Total a pagar</span><span>{fmtCOP(calc.total)}</span></div>
             <div className="res-row"><span>Plazo</span><span>{calc.dias} días</span></div>
             <div className="res-row"><span>Vence</span><span>{calc.fechaVence.toLocaleDateString('es-CO')}</span></div>
           </div>
+          <label className="codeu">
+            <input type="checkbox" checked={conCodeudores} onChange={e => setConCodeudores(e.target.checked)} />
+            <span>Aporto <strong>2 codeudores</strong> con documentos y contrato firmado — <em>sin administración ni seguro</em></span>
+          </label>
+          {conCodeudores && <div className="codeu-note">📎 Deberás enviar cédula y documentos de tus 2 codeudores; un asesor los validará.</div>}
         </div>
         <div className="card">
           <div className="slbl">Datos del solicitante</div>

@@ -41,3 +41,54 @@
 .mp { display:flex; align-items:center; gap:9px; }
 .mi { font-size:16px; }
 .mt { font-size:12px; color:var(--text2); }
+
+/* ── Codeudores (toggle) ── */
+.codeu { display:flex; align-items:flex-start; gap:8px; font-size:12px; color:var(--text2); line-height:1.4; cursor:pointer; margin-bottom:9px; }
+.codeu input { margin-top:2px; accent-color: var(--gold); flex-shrink:0; }
+.codeu strong { color:var(--text); }
+.codeu em { color:var(--green); font-style:normal; font-weight:600; }
+.codeu-note { font-size:11px; color:var(--gold); background:rgba(245,197,24,.08); border:1px solid rgba(245,197,24,.18); border-radius:8px; padding:7px 10px; margin-bottom:9px; }
+
+/* ── Simulador con brillo dorado ── */
+.simw { box-shadow: 0 0 0 1px rgba(245,197,24,.12), 0 10px 30px rgba(0,0,0,.28); }
+
+/* ── Sección de lujo (tesoro) ── */
+.lux {
+  position:relative; overflow:hidden; margin-top:12px;
+  background: radial-gradient(130% 150% at 50% 0%, #1b3566 0%, var(--card) 58%);
+  border:1px solid var(--gold); border-radius:16px; padding:18px 14px; text-align:center;
+  box-shadow: 0 0 26px rgba(245,197,24,.12) inset;
+}
+.lux-title { font-family:'Syne',sans-serif; font-weight:800; font-size:14px; color:var(--gold); margin-bottom:15px; letter-spacing:.4px; }
+.lux-sub { font-size:12px; color:var(--text2); margin:2px 0 14px; }
+.lux-sub strong { color:var(--gold2); }
+.lux-btn { max-width:220px; margin:0 auto; display:block; }
+.lux-scan { position:absolute; top:0; left:-30%; width:30%; height:100%; pointer-events:none;
+  background:linear-gradient(90deg, transparent, rgba(245,197,24,.12), transparent); animation: luxScan 5.5s linear infinite; }
+@keyframes luxScan { 0% { left:-30% } 100% { left:110% } }
+
+.lux-treasure { display:flex; justify-content:center; align-items:center; gap:14px; margin-bottom:12px; }
+.tz { width:42px; height:42px; position:relative; animation: tzFloat 3s ease-in-out infinite; }
+.tz::after { content:''; position:absolute; inset:0;
+  background:linear-gradient(115deg, transparent 32%, rgba(255,255,255,.8) 48%, transparent 62%);
+  transform:translateX(-130%); animation: tzShine 3.4s ease-in-out infinite; }
+@keyframes tzShine { 0%,55% { transform:translateX(-130%) } 78%,100% { transform:translateX(130%) } }
+@keyframes tzFloat { 0%,100% { transform:translateY(0) } 50% { transform:translateY(-6px) } }
+.tz.coin { border-radius:50%;
+  background: radial-gradient(circle at 35% 28%, #ffe98a, #f5c518 52%, #b8860b);
+  border:2px solid #ffdf4d; box-shadow:0 0 12px rgba(245,197,24,.55); }
+.tz.bar { border-radius:8px;
+  background: linear-gradient(135deg, #f4f6fb 0%, #c4cad6 45%, #9198a8 100%);
+  border-top:2px solid #ffffffaa; box-shadow:0 0 12px rgba(200,210,230,.45); }
+.tz.gem { clip-path: polygon(50% 0, 100% 38%, 50% 100%, 0 38%);
+  background: linear-gradient(135deg, #e6fdff 0%, #4dd7ff 48%, #1b8fd6 100%);
+  filter: drop-shadow(0 0 10px rgba(77,215,255,.6)); }
+.tz:nth-child(1){ animation-delay:0s } .tz:nth-child(1)::after{ animation-delay:.0s }
+.tz:nth-child(2){ animation-delay:.25s } .tz:nth-child(2)::after{ animation-delay:.5s }
+.tz:nth-child(3){ animation-delay:.5s } .tz:nth-child(3)::after{ animation-delay:1s }
+.tz:nth-child(4){ animation-delay:.75s } .tz:nth-child(4)::after{ animation-delay:1.5s }
+.tz:nth-child(5){ animation-delay:1s } .tz:nth-child(5)::after{ animation-delay:2s }
+
+@media (prefers-reduced-motion: reduce) {
+  .tz, .tz::after, .lux-scan { animation: none; }
+}

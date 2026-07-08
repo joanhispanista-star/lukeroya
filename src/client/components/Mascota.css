@@ -1,0 +1,82 @@
+/* ── Mascota robot animada (se pasea, parpadea, mueve pinzas) ── */
+.masc {
+  position: fixed;
+  bottom: 80px;
+  z-index: 45;
+  width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: none;           /* solo el robot y la burbuja reciben clics */
+  transition: left .9s cubic-bezier(.6,.1,.3,1), right .9s cubic-bezier(.6,.1,.3,1);
+}
+.masc-right { right: 12px; left: auto; align-items: flex-end; }
+.masc-left  { left: 12px;  right: auto; align-items: flex-start; }
+
+/* Robot */
+.masc-bot {
+  pointer-events: auto;
+  width: 68px; height: 84px;
+  padding: 0; border: none; background: none; cursor: pointer;
+  filter: drop-shadow(0 7px 14px rgba(0,0,0,.5));
+  animation: mascBob 3.2s ease-in-out infinite;
+}
+.masc-bot svg { width: 100%; height: 100%; display: block; }
+@keyframes mascBob { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-7px) } }
+
+/* Ojos: parpadeo + brillo */
+.masc-eye {
+  transform-box: fill-box; transform-origin: center;
+  filter: drop-shadow(0 0 4px #4dd7ff);
+  animation: mascBlink 4.5s infinite;
+}
+@keyframes mascBlink { 0%,92%,100% { transform: scaleY(1) } 96% { transform: scaleY(.12) } }
+
+/* Núcleo dorado latiendo */
+.masc-core {
+  transform-box: fill-box; transform-origin: center;
+  filter: drop-shadow(0 0 5px #f5c518);
+  animation: mascPulse 2s ease-in-out infinite;
+}
+@keyframes mascPulse { 0%,100% { transform: scale(1); opacity:.85 } 50% { transform: scale(1.15); opacity:1 } }
+
+/* Antena parpadeante */
+.masc-antena {
+  transform-box: fill-box; transform-origin: center;
+  animation: mascPulse 1.4s ease-in-out infinite;
+}
+
+/* Pinzas: se abren y cierran */
+.masc-prong-a, .masc-prong-b {
+  transform-box: fill-box; transform-origin: center;
+}
+.masc-prong-a { animation: mascPinchA 1.9s ease-in-out infinite; }
+.masc-prong-b { animation: mascPinchB 1.9s ease-in-out infinite; }
+@keyframes mascPinchA { 0%,100% { transform: rotate(0) } 50% { transform: rotate(-24deg) } }
+@keyframes mascPinchB { 0%,100% { transform: rotate(0) } 50% { transform: rotate(24deg) } }
+
+/* Burbuja de preguntas */
+.masc-bubble {
+  pointer-events: auto;
+  max-width: 172px;
+  background: linear-gradient(135deg, #1b3566 0%, #0f2147 100%);
+  border: 1px solid var(--gold);
+  color: var(--text);
+  font-size: 12px; line-height: 1.35;
+  padding: 9px 12px; border-radius: 14px;
+  cursor: pointer; position: relative;
+  box-shadow: 0 8px 20px rgba(0,0,0,.45);
+  animation: mascPop .4s ease;
+}
+@keyframes mascPop { from { opacity: 0; transform: translateY(8px) scale(.92) } to { opacity: 1; transform: none } }
+.masc-bubble-tip {
+  position: absolute; bottom: -6px; width: 12px; height: 12px;
+  background: #0f2147; border-right: 1px solid var(--gold); border-bottom: 1px solid var(--gold);
+  transform: rotate(45deg);
+}
+.masc-right .masc-bubble-tip { right: 24px; }
+.masc-left  .masc-bubble-tip { left: 24px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .masc-bot, .masc-eye, .masc-core, .masc-antena, .masc-prong-a, .masc-prong-b { animation: none; }
+}
