@@ -4,9 +4,10 @@ import { TYC_HTML } from '../../shared/constants'
 import './KYC.css'
 
 export default function KYC({ pendingUser, onBack }) {
-  const { finishKYC } = useClientStore()
+  const { finishKYC, sendOtp, checkOtp } = useClientStore()
   const [step, setStep] = useState(0)
-  const [otp, setOtp] = useState({})
+  const [otp, setOtp] = useState({})           // solo modo demo
+  const [mode, setMode] = useState({})          // por canal: 'whatsapp' | 'sms' | 'demo'
   const [otpInputs, setOtpInputs] = useState({ w: ['','','','','',''], e: ['','','','','',''] })
   const [email, setEmail] = useState('')
   const [tc1, setTc1] = useState(false)
@@ -15,24 +16,44 @@ export default function KYC({ pendingUser, onBack }) {
   const [err, setErr] = useState('')
   const [sent, setSent] = useState({ wa: false, em: false })
   const [loading, setLoading] = useState(false)
+  const [sending, setSending] = useState(false)
+  const [verifying, setVerifying] = useState(false)
 
-  function sendOTP(type) {
-    const code = Math.floor(100000 + Math.random() * 900000).toString()
-    setOtp(o => ({ ...o, [type]: code }))
+  function flashErr(msg) { setErr(msg); setTimeout(() => setErr(''), 3000) }
+
+  // type: 'wa' (usa channel 'whatsapp'/'sms') o 'em' (email, demo)
+  async function sendOTP(type, channel) {
+    setErr(''); setSending(true)
+    const ch = type === 'wa' ? (channel || 'whatsapp') : 'email'
+    const data = await sendOtp({ tel: pendingUser.tel, email, channel: ch })
+    setSending(false)
+    if (data.error) { flashErr(data.error); return }
+    setMode(m => ({ ...m, [type]: data.mode }))
     setSent(s => ({ ...s, [type === 'wa' ? 'wa' : 'em']: true }))
-    alert(`Código OTP (demo): ${code}`)
+    if (data.mode === 'demo') {
+      setOtp(o => ({ ...o, [type]: data.code }))
+      alert(`Código (modo demo, sin WhatsApp real): ${data.code}`)
+    }
   }
 
-  function verifyOTP(type) {
+  async function verifyOTP(type) {
     const prefix = type === 'wa' ? 'w' : 'e'
     const entered = otpInputs[prefix].join('')
-    if (entered === otp[type]) {
-      setErr('')
-      setStep(type === 'wa' ? 3 : 4)
-    } else {
-      setErr('Código incorrecto')
-      setTimeout(() => setErr(''), 3000)
+    if (entered.length < 6) { flashErr('Escribe los 6 dígitos'); return }
+    const next = () => { setErr(''); setStep(type === 'wa' ? 3 : 4) }
+    // Demo: se valida contra el código que generamos localmente.
+    if (mode[type] === 'demo' || mode[type] === undefined) {
+      if (entered === otp[type]) next()
+      else flashErr('Código incorrecto')
+      return
     }
+    // Real: lo valida Twilio en el servidor.
+    setVerifying(true)
+    const data = await checkOtp({ tel: pendingUser.tel, code: entered, channel: mode[type] })
+    setVerifying(false)
+    if (data.error) { flashErr(data.error); return }
+    if (data.ok) next()
+    else flashErr('Código incorrecto')
   }
 
   function setOtpDigit(prefix, i, val) {
@@ -81,12 +102,23 @@ export default function KYC({ pendingUser, onBack }) {
     <div key={2} className="kstep">
       <div className="kstep-title">Verifica tu WhatsApp</div>
       <div className="kstep-sub">Enviamos un código a <strong style={{ color:'var(--gold)' }}>{pendingUser.tel}</strong></div>
-      <button className="btn" style={{ background:'rgba(37,211,102,.18)',border:'1px solid rgba(37,211,102,.3)',color:'#25D366',marginBottom:9 }} onClick={() => sendOTP('wa')}>
-        📲 Enviar código WhatsApp
+      <button className="btn" disabled={sending} style={{ background:'rgba(37,211,102,.18)',border:'1px solid rgba(37,211,102,.3)',color:'#25D366',marginBottom:9 }} onClick={() => sendOTP('wa', 'whatsapp')}>
+        {sending ? 'Enviando…' : '📲 Enviar código por WhatsApp'}
       </button>
-      {sent.wa && <div className="otps">✅ Código generado — revisa el aviso de arriba.</div>}
+      {sent.wa && (
+        <div className="otps">
+          {mode.wa === 'demo'
+            ? '✅ Modo demo: revisa el aviso de arriba (aún no es WhatsApp real).'
+            : mode.wa === 'sms'
+              ? '✅ Código enviado por SMS. Revisa tus mensajes.'
+              : '✅ Código enviado a tu WhatsApp. Revisa la app.'}
+        </div>
+      )}
       <OtpRow prefix="w" />
-      <button className="btn" onClick={() => verifyOTP('wa')}>Verificar</button>
+      <button className="btn" disabled={verifying} onClick={() => verifyOTP('wa')}>{verifying ? 'Verificando…' : 'Verificar'}</button>
+      {sent.wa && mode.wa !== 'demo' && (
+        <button className="btn-ghost" disabled={sending} onClick={() => sendOTP('wa', 'sms')}>¿No te llegó? Enviar por SMS</button>
+      )}
       {err && <div className="err">{err}</div>}
       <button className="btn-ghost" onClick={() => setStep(1)}>← Atrás</button>
     </div>,

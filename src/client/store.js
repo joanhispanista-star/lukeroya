@@ -29,6 +29,16 @@ const useClientStore = create((set, get) => ({
     set({ user: null, screen: 'home', moreOpen: false })
   },
 
+  async sendOtp(body) {
+    try { return await api('/otp/send', { method: 'POST', body }) }
+    catch { return { error: 'Error de conexión' } }
+  },
+
+  async checkOtp(body) {
+    try { return await api('/otp/check', { method: 'POST', body }) }
+    catch { return { error: 'Error de conexión' } }
+  },
+
   async finishKYC(pendingUser) {
     try {
       const data = await api('/auth/register', {

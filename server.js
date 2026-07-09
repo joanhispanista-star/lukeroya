@@ -133,6 +133,56 @@ app.post('/api/auth/register', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }) }
 })
 
+// ── OTP / VERIFICACIÓN WHATSAPP (Twilio Verify) ───────────────
+// Con las 3 env vars puestas → WhatsApp/SMS real. Sin ellas → modo demo
+// (devuelve el código y el frontend lo muestra en un aviso, como antes).
+const twilioOn = !!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_VERIFY_SID)
+
+// Normaliza un teléfono colombiano a formato E.164 (+57XXXXXXXXXX)
+function normalizeCO(tel) {
+  let t = String(tel || '').replace(/\D/g, '')
+  if (t.startsWith('57') && t.length === 12) return '+' + t
+  if (t.length === 10) return '+57' + t
+  return '+' + t
+}
+
+async function twilioVerify(pathSuffix, params) {
+  const auth = Buffer.from(`${process.env.TWILIO_ACCOUNT_SID}:${process.env.TWILIO_AUTH_TOKEN}`).toString('base64')
+  const r = await fetch(
+    `https://verify.twilio.com/v2/Services/${process.env.TWILIO_VERIFY_SID}/${pathSuffix}`,
+    { method: 'POST', headers: { Authorization: `Basic ${auth}`, 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(params) }
+  )
+  const j = await r.json()
+  if (!r.ok) throw new Error(j.message || `Twilio ${r.status}`)
+  return j
+}
+
+// Enviar código. body: { tel, email, channel: 'whatsapp' | 'sms' | 'email' }
+app.post('/api/otp/send', async (req, res) => {
+  const ch = req.body.channel || 'whatsapp'
+  try {
+    // Email todavía en modo demo; sin Twilio configurado todo cae a demo.
+    if (ch === 'email' || !twilioOn) {
+      const code = Math.floor(100000 + Math.random() * 900000).toString()
+      return res.json({ mode: 'demo', code })
+    }
+    const to = normalizeCO(req.body.tel)
+    await twilioVerify('Verifications', { To: to, Channel: ch })
+    res.json({ mode: ch })
+  } catch (e) { res.status(502).json({ error: 'No se pudo enviar el código: ' + e.message }) }
+})
+
+// Verificar código. body: { tel, code, channel }
+app.post('/api/otp/check', async (req, res) => {
+  const ch = req.body.channel || 'whatsapp'
+  try {
+    if (ch === 'email' || !twilioOn) return res.json({ ok: false, demo: true })
+    const to = normalizeCO(req.body.tel)
+    const r = await twilioVerify('VerificationCheck', { To: to, Code: req.body.code })
+    res.json({ ok: r.status === 'approved' })
+  } catch (e) { res.status(502).json({ error: e.message }) }
+})
+
 // ── USUARIOS ──────────────────────────────────────────────────
 app.get('/api/users/:cedula', async (req, res) => {
   try {
