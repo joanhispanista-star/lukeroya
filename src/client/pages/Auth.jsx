@@ -67,6 +67,9 @@ export default function Auth() {
           </form>
         ) : (
           <form onSubmit={doReg}>
+            <div style={{ background:'rgba(212,175,55,.12)', border:'1px solid rgba(212,175,55,.35)', borderRadius:10, padding:'9px 12px', fontSize:12.5, color:'var(--gold)', marginBottom:12, textAlign:'center' }}>
+              🔑 Necesitas un <strong>código de acceso</strong> que te entrega Lukero.
+            </div>
             <div className="field"><label>Nombre completo</label>
               <input value={rNom} onChange={e => setRNom(e.target.value)} placeholder="María Fernández" />
             </div>

@@ -6,6 +6,7 @@ import Clientes from './pages/Clientes'
 import Calculadora from './pages/Calculadora'
 import Contrapropuesta from './pages/Contrapropuesta'
 import ComunidadCrm from './pages/ComunidadCrm'
+import Codigos from './pages/Codigos'
 import Placeholder from './pages/Placeholder'
 import Sidebar from './components/Sidebar'
 import './crm.css'
@@ -17,6 +18,7 @@ const VIEWS = {
   calculadora:    <Calculadora />,
   contrapropuesta:<Contrapropuesta />,
   comunidad:      <ComunidadCrm />,
+  codigos:        <Codigos />,
   mapa:           <Placeholder title="Mapa" icon="🗺️" />,
   exportar:       <Placeholder title="Exportar" icon="📤" />,
 }

@@ -74,6 +74,16 @@ async function initDB() {
       destacado   BOOLEAN DEFAULT FALSE,
       fecha       TIMESTAMPTZ DEFAULT NOW()
     );
+    CREATE TABLE IF NOT EXISTS codigos_acceso (
+      codigo          TEXT PRIMARY KEY,
+      nota            TEXT DEFAULT '',
+      cedula_asignada TEXT DEFAULT '',
+      usado           BOOLEAN DEFAULT FALSE,
+      usado_por       TEXT DEFAULT '',
+      creado_por      TEXT DEFAULT '',
+      fecha_creado    TIMESTAMPTZ DEFAULT NOW(),
+      fecha_usado     TIMESTAMPTZ
+    );
   `)
 
   const demo = await pool.query('SELECT cedula FROM users WHERE cedula = $1', ['1234567890'])
@@ -120,16 +130,34 @@ app.post('/api/auth/login', async (req, res) => {
 
 app.post('/api/auth/register', async (req, res) => {
   const { cedula, password, nombre, email, telefono } = req.body
+  const cod = (req.body.codigo || '').trim().toUpperCase()
   try {
     const exists = await pool.query('SELECT cedula FROM users WHERE cedula = $1', [cedula])
     if (exists.rows.length) return res.status(409).json({ error: 'Cédula ya registrada' })
-    const hash = await bcrypt.hash(password, 10)
-    const r = await pool.query(
-      `INSERT INTO users (cedula, password, nombre, email, telefono)
-       VALUES ($1,$2,$3,$4,$5) RETURNING *`,
-      [cedula, hash, nombre, email || '', telefono || '']
+
+    // Reclamar el código de acceso de forma atómica: solo si existe, no se ha usado,
+    // y (si está asignado a una cédula) coincide. Así un código sirve una sola vez.
+    const claim = await pool.query(
+      `UPDATE codigos_acceso SET usado = TRUE, usado_por = $1, fecha_usado = NOW()
+       WHERE codigo = $2 AND usado = FALSE AND (cedula_asignada = '' OR cedula_asignada = $1)
+       RETURNING codigo`,
+      [cedula, cod]
     )
-    res.json(toUser(r.rows[0]))
+    if (!claim.rows.length) return res.status(403).json({ error: 'Código de acceso no válido o ya usado' })
+
+    const hash = await bcrypt.hash(password, 10)
+    try {
+      const r = await pool.query(
+        `INSERT INTO users (cedula, password, nombre, email, telefono)
+         VALUES ($1,$2,$3,$4,$5) RETURNING *`,
+        [cedula, hash, nombre, email || '', telefono || '']
+      )
+      res.json(toUser(r.rows[0]))
+    } catch (e) {
+      // Si falla crear el usuario, liberar el código para que no se pierda.
+      await pool.query('UPDATE codigos_acceso SET usado = FALSE, usado_por = \'\', fecha_usado = NULL WHERE codigo = $1', [cod])
+      throw e
+    }
   } catch (e) { res.status(500).json({ error: e.message }) }
 })
 
@@ -181,6 +209,72 @@ app.post('/api/otp/check', async (req, res) => {
     const r = await twilioVerify('VerificationCheck', { To: to, Code: req.body.code })
     res.json({ ok: r.status === 'approved' })
   } catch (e) { res.status(502).json({ error: e.message }) }
+})
+
+// ── CÓDIGOS DE ACCESO (invitación, un solo uso) ───────────────
+const toCodigo = r => ({
+  codigo: r.codigo, nota: r.nota, cedulaAsignada: r.cedula_asignada,
+  usado: r.usado, usadoPor: r.usado_por, creadoPor: r.creado_por,
+  fechaCreado: r.fecha_creado, fechaUsado: r.fecha_usado,
+})
+
+// Genera un código legible (sin caracteres ambiguos: nada de O/0, I/1, L).
+function genCodigo() {
+  const abc = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
+  let s = ''
+  for (let i = 0; i < 6; i++) s += abc[Math.floor(Math.random() * abc.length)]
+  return 'LKR-' + s
+}
+
+// Generar un código (CRM)
+app.post('/api/codigos', async (req, res) => {
+  const { nota, cedula, creadoPor } = req.body
+  try {
+    let codigo
+    for (let i = 0; ; i++) {
+      codigo = genCodigo()
+      const ex = await pool.query('SELECT 1 FROM codigos_acceso WHERE codigo = $1', [codigo])
+      if (!ex.rows.length) break
+      if (i > 6) return res.status(500).json({ error: 'No se pudo generar un código único' })
+    }
+    const r = await pool.query(
+      `INSERT INTO codigos_acceso (codigo, nota, cedula_asignada, creado_por)
+       VALUES ($1,$2,$3,$4) RETURNING *`,
+      [codigo, (nota || '').trim(), (cedula || '').trim(), (creadoPor || '').trim()]
+    )
+    res.json(toCodigo(r.rows[0]))
+  } catch (e) { res.status(500).json({ error: e.message }) }
+})
+
+// Listar códigos (CRM)
+app.get('/api/codigos', async (req, res) => {
+  try {
+    const r = await pool.query('SELECT * FROM codigos_acceso ORDER BY fecha_creado DESC')
+    res.json(r.rows.map(toCodigo))
+  } catch (e) { res.status(500).json({ error: e.message }) }
+})
+
+// Borrar un código sin usar (CRM)
+app.delete('/api/codigos/:codigo', async (req, res) => {
+  try {
+    const r = await pool.query('DELETE FROM codigos_acceso WHERE codigo = $1 AND usado = FALSE RETURNING codigo', [req.params.codigo])
+    if (!r.rows.length) return res.status(400).json({ error: 'No se puede borrar (no existe o ya fue usado)' })
+    res.json({ ok: true })
+  } catch (e) { res.status(500).json({ error: e.message }) }
+})
+
+// Validar un código sin consumirlo (feedback durante el registro)
+app.post('/api/codigos/validar', async (req, res) => {
+  const codigo = (req.body.codigo || '').trim().toUpperCase()
+  const cedula = (req.body.cedula || '').trim()
+  try {
+    const r = await pool.query('SELECT * FROM codigos_acceso WHERE codigo = $1', [codigo])
+    if (!r.rows.length) return res.status(404).json({ error: 'Código no válido' })
+    const c = r.rows[0]
+    if (c.usado) return res.status(409).json({ error: 'Ese código ya fue usado' })
+    if (c.cedula_asignada && c.cedula_asignada !== cedula) return res.status(403).json({ error: 'Ese código es para otra cédula' })
+    res.json({ ok: true })
+  } catch (e) { res.status(500).json({ error: e.message }) }
 })
 
 // ── USUARIOS ──────────────────────────────────────────────────

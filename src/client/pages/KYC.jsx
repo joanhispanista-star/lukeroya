@@ -4,84 +4,34 @@ import { TYC_HTML } from '../../shared/constants'
 import './KYC.css'
 
 export default function KYC({ pendingUser, onBack }) {
-  const { finishKYC, sendOtp, checkOtp } = useClientStore()
+  const { finishKYC, validarCodigo } = useClientStore()
   const [step, setStep] = useState(0)
-  const [otp, setOtp] = useState({})           // solo modo demo
-  const [mode, setMode] = useState({})          // por canal: 'whatsapp' | 'sms' | 'demo'
-  const [otpInputs, setOtpInputs] = useState({ w: ['','','','','',''], e: ['','','','','',''] })
-  const [email, setEmail] = useState('')
+  const [codigo, setCodigo] = useState('')
   const [tc1, setTc1] = useState(false)
   const [tc2, setTc2] = useState(false)
   const [tc3, setTc3] = useState(false)
   const [err, setErr] = useState('')
-  const [sent, setSent] = useState({ wa: false, em: false })
+  const [checking, setChecking] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [sending, setSending] = useState(false)
-  const [verifying, setVerifying] = useState(false)
 
-  function flashErr(msg) { setErr(msg); setTimeout(() => setErr(''), 3000) }
+  function flashErr(msg) { setErr(msg); setTimeout(() => setErr(''), 4000) }
 
-  // type: 'wa' (usa channel 'whatsapp'/'sms') o 'em' (email, demo)
-  async function sendOTP(type, channel) {
-    setErr(''); setSending(true)
-    const ch = type === 'wa' ? (channel || 'whatsapp') : 'email'
-    const data = await sendOtp({ tel: pendingUser.tel, email, channel: ch })
-    setSending(false)
+  async function checkCodigo() {
+    const c = codigo.trim().toUpperCase()
+    if (!c) { flashErr('Escribe el código que te dieron'); return }
+    setChecking(true); setErr('')
+    const data = await validarCodigo(c, pendingUser.cedula)
+    setChecking(false)
     if (data.error) { flashErr(data.error); return }
-    setMode(m => ({ ...m, [type]: data.mode }))
-    setSent(s => ({ ...s, [type === 'wa' ? 'wa' : 'em']: true }))
-    if (data.mode === 'demo') {
-      setOtp(o => ({ ...o, [type]: data.code }))
-      alert(`Código (modo demo, sin WhatsApp real): ${data.code}`)
-    }
-  }
-
-  async function verifyOTP(type) {
-    const prefix = type === 'wa' ? 'w' : 'e'
-    const entered = otpInputs[prefix].join('')
-    if (entered.length < 6) { flashErr('Escribe los 6 dígitos'); return }
-    const next = () => { setErr(''); setStep(type === 'wa' ? 3 : 4) }
-    // Demo: se valida contra el código que generamos localmente.
-    if (mode[type] === 'demo' || mode[type] === undefined) {
-      if (entered === otp[type]) next()
-      else flashErr('Código incorrecto')
-      return
-    }
-    // Real: lo valida Twilio en el servidor.
-    setVerifying(true)
-    const data = await checkOtp({ tel: pendingUser.tel, code: entered, channel: mode[type] })
-    setVerifying(false)
-    if (data.error) { flashErr(data.error); return }
-    if (data.ok) next()
-    else flashErr('Código incorrecto')
-  }
-
-  function setOtpDigit(prefix, i, val) {
-    setOtpInputs(o => {
-      const next = { ...o, [prefix]: [...o[prefix]] }
-      next[prefix][i] = val.slice(-1)
-      return next
-    })
+    setStep(3)
   }
 
   async function handleFinish() {
-    setLoading(true)
-    setErr('')
-    const error = await finishKYC({ ...pendingUser, email })
+    setLoading(true); setErr('')
+    const error = await finishKYC({ ...pendingUser, codigo: codigo.trim().toUpperCase() })
     setLoading(false)
-    if (error) setErr(error)
+    if (error) flashErr(error)
   }
-
-  const OtpRow = ({ prefix }) => (
-    <div className="otpr">
-      {[0,1,2,3,4,5].map(i => (
-        <input key={i} className="otin" maxLength={1}
-          value={otpInputs[prefix][i]}
-          onChange={e => setOtpDigit(prefix, i, e.target.value)}
-        />
-      ))}
-    </div>
-  )
 
   const steps = [
     <div key={0} className="kstep">
@@ -100,44 +50,24 @@ export default function KYC({ pendingUser, onBack }) {
     </div>,
 
     <div key={2} className="kstep">
-      <div className="kstep-title">Verifica tu WhatsApp</div>
-      <div className="kstep-sub">Enviamos un código a <strong style={{ color:'var(--gold)' }}>{pendingUser.tel}</strong></div>
-      <button className="btn" disabled={sending} style={{ background:'rgba(37,211,102,.18)',border:'1px solid rgba(37,211,102,.3)',color:'#25D366',marginBottom:9 }} onClick={() => sendOTP('wa', 'whatsapp')}>
-        {sending ? 'Enviando…' : '📲 Enviar código por WhatsApp'}
-      </button>
-      {sent.wa && (
-        <div className="otps">
-          {mode.wa === 'demo'
-            ? '✅ Modo demo: revisa el aviso de arriba (aún no es WhatsApp real).'
-            : mode.wa === 'sms'
-              ? '✅ Código enviado por SMS. Revisa tus mensajes.'
-              : '✅ Código enviado a tu WhatsApp. Revisa la app.'}
-        </div>
-      )}
-      <OtpRow prefix="w" />
-      <button className="btn" disabled={verifying} onClick={() => verifyOTP('wa')}>{verifying ? 'Verificando…' : 'Verificar'}</button>
-      {sent.wa && mode.wa !== 'demo' && (
-        <button className="btn-ghost" disabled={sending} onClick={() => sendOTP('wa', 'sms')}>¿No te llegó? Enviar por SMS</button>
-      )}
+      <div className="kstep-title">Código de acceso</div>
+      <div className="kstep-sub">Ingresa el código que <strong style={{ color:'var(--gold)' }}>Lukero te entregó</strong> para activar tu cuenta.</div>
+      <div className="field"><label>Código</label>
+        <input
+          value={codigo}
+          onChange={e => setCodigo(e.target.value.toUpperCase())}
+          onKeyDown={e => { if (e.key === 'Enter') checkCodigo() }}
+          placeholder="LKR-XXXXXX"
+          style={{ textTransform:'uppercase', letterSpacing:2, fontWeight:700, textAlign:'center' }}
+        />
+      </div>
+      <button className="btn" disabled={checking} onClick={checkCodigo}>{checking ? 'Validando…' : 'Validar y continuar →'}</button>
       {err && <div className="err">{err}</div>}
+      <div className="auth-foot" style={{ marginTop: 10 }}>¿No tienes código? Escríbenos por WhatsApp y te lo damos.</div>
       <button className="btn-ghost" onClick={() => setStep(1)}>← Atrás</button>
     </div>,
 
     <div key={3} className="kstep">
-      <div className="kstep-title">Verifica tu correo</div>
-      <div className="kstep-sub">Ingresa tu correo para recibir el código.</div>
-      <div className="field"><label>Correo electrónico</label>
-        <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="tucorreo@gmail.com" />
-      </div>
-      <button className="btn" style={{ marginBottom:9 }} onClick={() => { if(!email){setErr('Ingresa tu correo');return}; sendOTP('em') }}>📧 Enviar código</button>
-      {sent.em && <div className="otps">✅ Código generado — revisa el aviso de arriba.</div>}
-      <OtpRow prefix="e" />
-      <button className="btn" onClick={() => verifyOTP('em')}>Verificar</button>
-      {err && <div className="err">{err}</div>}
-      <button className="btn-ghost" onClick={() => setStep(2)}>← Atrás</button>
-    </div>,
-
-    <div key={4} className="kstep">
       <div className="kstep-title">Términos y condiciones</div>
       <div className="tcscr" dangerouslySetInnerHTML={{ __html: TYC_HTML }} />
       <label className="tcck"><input type="checkbox" checked={tc1} onChange={e => setTc1(e.target.checked)} /><span>He leído y acepto los <strong>Términos y Condiciones</strong></span></label>
@@ -149,6 +79,7 @@ export default function KYC({ pendingUser, onBack }) {
         onClick={handleFinish}>
         {loading ? 'Registrando...' : 'COMPLETAR REGISTRO'}
       </button>
+      <button className="btn-ghost" onClick={() => setStep(2)}>← Atrás</button>
     </div>,
   ]
 
@@ -159,7 +90,7 @@ export default function KYC({ pendingUser, onBack }) {
       <div className="auth-tag">Verificación de identidad</div>
       <div className="auth-card" style={{ maxWidth:370 }}>
         <div className="kprog">
-          {[0,1,2,3,4].map(i => (
+          {[0,1,2,3].map(i => (
             <div key={i} className={`kd${i === step ? ' cur' : i < step ? ' done' : ''}`} />
           ))}
         </div>

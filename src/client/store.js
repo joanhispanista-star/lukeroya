@@ -29,13 +29,8 @@ const useClientStore = create((set, get) => ({
     set({ user: null, screen: 'home', moreOpen: false })
   },
 
-  async sendOtp(body) {
-    try { return await api('/otp/send', { method: 'POST', body }) }
-    catch { return { error: 'Error de conexión' } }
-  },
-
-  async checkOtp(body) {
-    try { return await api('/otp/check', { method: 'POST', body }) }
+  async validarCodigo(codigo, cedula) {
+    try { return await api('/codigos/validar', { method: 'POST', body: { codigo, cedula } }) }
     catch { return { error: 'Error de conexión' } }
   },
 
@@ -49,6 +44,7 @@ const useClientStore = create((set, get) => ({
           nombre: pendingUser.nombre,
           email: pendingUser.email || '',
           telefono: pendingUser.tel || '',
+          codigo: pendingUser.codigo || '',
         },
       })
       if (data.error) return data.error

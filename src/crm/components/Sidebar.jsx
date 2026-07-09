@@ -6,6 +6,7 @@ const NAV = [
     { key:'dashboard',    icon:'📊', label:'Dashboard'     },
     { key:'solicitudes',  icon:'📋', label:'Solicitudes'   },
     { key:'clientes',     icon:'👥', label:'Clientes'      },
+    { key:'codigos',      icon:'🔑', label:'Códigos'      },
     { key:'comunidad',    icon:'⭐', label:'Comunidad'     },
   ]},
   { section:'Herramientas', items:[

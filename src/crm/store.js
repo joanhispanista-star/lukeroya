@@ -13,6 +13,7 @@ const useCrmStore = create((set, get) => ({
   solicitudes: [],
   clientes: [],
   comentarios: [],
+  codigos: [],
 
   async login(user, pass) {
     try {
@@ -55,6 +56,30 @@ const useCrmStore = create((set, get) => ({
       await api(`/solicitudes/${id}`, { method: 'PATCH', body: changes })
       get().fetchSolicitudes()
     } catch (e) { console.error('updateSolicitud:', e) }
+  },
+
+  async fetchCodigos() {
+    try {
+      const data = await api('/codigos')
+      if (Array.isArray(data)) set({ codigos: data })
+    } catch (e) { console.error('fetchCodigos:', e) }
+  },
+
+  async generarCodigo(body) {
+    try {
+      const data = await api('/codigos', { method: 'POST', body })
+      if (data.error) return { error: data.error }
+      get().fetchCodigos()
+      return data
+    } catch { return { error: 'Error de conexión' } }
+  },
+
+  async revocarCodigo(codigo) {
+    try {
+      const data = await api(`/codigos/${codigo}`, { method: 'DELETE' })
+      get().fetchCodigos()
+      return data.error ? data.error : null
+    } catch { return 'Error de conexión' }
   },
 }))
 
