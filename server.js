@@ -47,7 +47,9 @@ async function initDB() {
       social      JSONB DEFAULT '{}',
       credito_activo JSONB,
       historial   JSONB DEFAULT '[]',
-      created_at  TIMESTAMPTZ DEFAULT NOW()
+      created_at  TIMESTAMPTZ DEFAULT NOW(),
+      consent_fecha   TIMESTAMPTZ,
+      consent_version TEXT
     );
     CREATE TABLE IF NOT EXISTS solicitudes (
       id          TEXT PRIMARY KEY,
@@ -85,6 +87,11 @@ async function initDB() {
       fecha_usado     TIMESTAMPTZ
     );
   `)
+
+  // Migración: columnas de consentimiento (Habeas Data) para bases ya existentes.
+  for (const col of ['consent_fecha TIMESTAMPTZ', 'consent_version TEXT']) {
+    try { await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS ${col}`) } catch (e) { /* pg-mem o ya existe */ }
+  }
 
   const demo = await pool.query('SELECT cedula FROM users WHERE cedula = $1', ['1234567890'])
   if (demo.rows.length === 0) {
@@ -146,11 +153,12 @@ app.post('/api/auth/register', async (req, res) => {
     if (!claim.rows.length) return res.status(403).json({ error: 'Código de acceso no válido o ya usado' })
 
     const hash = await bcrypt.hash(password, 10)
+    const tyc = (req.body.tycVersion || '').toString().slice(0, 20) || null
     try {
       const r = await pool.query(
-        `INSERT INTO users (cedula, password, nombre, email, telefono)
-         VALUES ($1,$2,$3,$4,$5) RETURNING *`,
-        [cedula, hash, nombre, email || '', telefono || '']
+        `INSERT INTO users (cedula, password, nombre, email, telefono, consent_fecha, consent_version)
+         VALUES ($1,$2,$3,$4,$5, NOW(), $6) RETURNING *`,
+        [cedula, hash, nombre, email || '', telefono || '', tyc]
       )
       res.json(toUser(r.rows[0]))
     } catch (e) {

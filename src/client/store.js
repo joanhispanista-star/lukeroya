@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { NV, PTS_NIVEL, PTS_PUNTUAL, PTS_ANTICIPADO } from '../shared/constants'
+import { NV, PTS_NIVEL, PTS_PUNTUAL, PTS_ANTICIPADO, TYC_VERSION } from '../shared/constants'
 import { ptsEnNivel } from '../shared/utils'
 
 const api = (path, opts = {}) =>
@@ -45,6 +45,7 @@ const useClientStore = create((set, get) => ({
           email: pendingUser.email || '',
           telefono: pendingUser.tel || '',
           codigo: pendingUser.codigo || '',
+          tycVersion: TYC_VERSION,
         },
       })
       if (data.error) return data.error
