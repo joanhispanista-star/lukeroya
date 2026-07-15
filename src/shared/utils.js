@@ -1,4 +1,4 @@
-import { NV, PTS_NIVEL } from './constants'
+import { NV, PTS_NIVEL, TECHO_EA, PLAZO_DIAS, PRORROGA_DIAS } from './constants'
 
 export const fmt = n => Number(n).toLocaleString('es-CO')
 export const fmtCOP = n => '$' + fmt(n)
@@ -32,50 +32,38 @@ export async function copyText(text, label = '') {
   }
 }
 
-export function prP(n) {
-  return n <= 2 ? .20 : n <= 5 ? .18 : n <= 8 ? .15 : n <= 12 ? .12 : n <= 16 ? .10 : .08
+// Costo (fracción del capital) que corresponde a una Tasa Efectiva Anual
+// para un plazo dado en días.  costo = (1 + EA)^(días/365) − 1
+export function costoDeEA(ea, dias) {
+  if (ea <= 0 || dias <= 0) return 0
+  return Math.pow(1 + ea, dias / 365) - 1
 }
 
+// Tasa Efectiva Anual aplicable a un nivel. Con 2 codeudores (garantía) baja.
+// TOPE DE SEGURIDAD: nunca devuelve una tasa por encima del techo de usura,
+// aunque un nivel esté mal configurado o el techo baje.
+export function eaNivel(nivel, conCodeudores = false) {
+  const nv = NV[nivel - 1]
+  const base = Math.min(nv.ea, TECHO_EA)
+  const ea = conCodeudores ? base * 0.75 : base
+  return Math.min(ea, TECHO_EA)
+}
+
+// Costo del crédito: un ÚNICO interés transparente, sin cargos fragmentados,
+// calculado por la Tasa Efectiva Anual del nivel. Siempre bajo el techo de usura.
+export function calcDesglose(capital, nivel, { conCodeudores = false, prorroga = 0, dias = PLAZO_DIAS } = {}) {
+  const totalDias = dias + prorroga * PRORROGA_DIAS
+  const ea = eaNivel(nivel, conCodeudores)
+  const interes = Math.round(capital * costoDeEA(ea, totalDias))
+  const total = capital + interes
+
+  const fechaVence = new Date()
+  fechaVence.setDate(fechaVence.getDate() + totalDias)
+
+  return { capital, interes, cobro: interes, total, dias: totalDias, ea, fechaVence, conCodeudores }
+}
+
+// Alias retro-compatible.
 export function calcCredito(capital, nivel, prorroga = 0) {
-  const nv = NV[nivel - 1]
-  const tasa = nv.tasa
-  const diasBase = 8
-  const dias = diasBase + prorroga * 3
-
-  const interes = Math.round(capital * tasa * 0.40)
-  const poliza = Math.round(capital * tasa * 0.20)
-  const tech = Math.round(capital * tasa * 0.25 * 1.19)
-  const admin = Math.round(capital * tasa * 0.15)
-  const total = capital + interes + poliza + tech + admin
-
-  const fechaVence = new Date()
-  fechaVence.setDate(fechaVence.getDate() + dias)
-
-  return { capital, total, interes, poliza, tech, admin, dias, fechaVence }
-}
-
-// Desglose por servicios (sin mostrar porcentaje al cliente).
-//  • Base (interés + tecnología): no supera ~12% del capital en N1, baja por nivel.
-//  • Extra (administración + seguro): ~18% en N1. Se EXONERA si el cliente aporta
-//    2 codeudores con documentos y contrato firmado que garantice el pago.
-export function calcDesglose(capital, nivel, { conCodeudores = false, prorroga = 0 } = {}) {
-  const nv = NV[nivel - 1]
-  const tasa = nv.tasa
-  const dias = 8 + prorroga * 3
-
-  const base  = tasa * 0.40                       // interés + tecnología
-  const extra = conCodeudores ? 0 : tasa * 0.60   // admin + seguro (exonerable)
-
-  const interes    = Math.round(capital * base  * 0.60)
-  const tecnologia = Math.round(capital * base  * 0.40)
-  const admin      = Math.round(capital * extra * 0.45)
-  const seguro     = Math.round(capital * extra * 0.55)
-
-  const cobro = interes + tecnologia + admin + seguro
-  const total = capital + cobro
-
-  const fechaVence = new Date()
-  fechaVence.setDate(fechaVence.getDate() + dias)
-
-  return { capital, interes, tecnologia, admin, seguro, cobro, total, dias, fechaVence, conCodeudores }
+  return calcDesglose(capital, nivel, { prorroga })
 }

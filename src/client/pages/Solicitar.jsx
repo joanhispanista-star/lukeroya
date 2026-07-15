@@ -25,7 +25,7 @@ export default function Solicitar() {
       nombre:     user.nombre,
       monto:      selCap,
       plazo:      calc.dias,
-      tasa:       nv.tasa,
+      tasa:       calc.ea,
       totalPagar: calc.total,
       fechaVence: calc.fechaVence.toLocaleDateString('es-CO'),
       capital:    selCap,
@@ -68,16 +68,14 @@ export default function Solicitar() {
           <div className="res-box">
             <div className="res-row"><span>Capital</span><span>{fmtCOP(selCap)}</span></div>
             <div className="res-row"><span>Interés</span><span>+{fmtCOP(calc.interes)}</span></div>
-            <div className="res-row"><span>Tecnología</span><span>+{fmtCOP(calc.tecnologia)}</span></div>
-            {!conCodeudores && <div className="res-row"><span>Administración</span><span>+{fmtCOP(calc.admin)}</span></div>}
-            {!conCodeudores && <div className="res-row"><span>Seguro</span><span>+{fmtCOP(calc.seguro)}</span></div>}
             <div className="res-row total"><span>Total a pagar</span><span>{fmtCOP(calc.total)}</span></div>
             <div className="res-row"><span>Plazo</span><span>{calc.dias} días</span></div>
+            <div className="res-row"><span>Tasa E.A.</span><span>{(calc.ea * 100).toLocaleString('es-CO', { maximumFractionDigits: 1 })}%</span></div>
             <div className="res-row"><span>Vence</span><span>{calc.fechaVence.toLocaleDateString('es-CO')}</span></div>
           </div>
           <label className="codeu">
             <input type="checkbox" checked={conCodeudores} onChange={e => setConCodeudores(e.target.checked)} />
-            <span>Aporto <strong>2 codeudores</strong> con documentos y contrato firmado — <em>sin administración ni seguro</em></span>
+            <span>Aporto <strong>2 codeudores</strong> con documentos y contrato firmado — <em>mejor tasa</em></span>
           </label>
           {conCodeudores && <div className="codeu-note">📎 Deberás enviar cédula y documentos de tus 2 codeudores; un asesor los validará.</div>}
         </div>

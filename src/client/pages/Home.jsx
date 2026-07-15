@@ -64,18 +64,16 @@ export default function Home() {
           <div className="res-box">
             <div className="res-row"><span>Capital</span><span>{fmtCOP(selCap)}</span></div>
             <div className="res-row"><span>Interés</span><span>+{fmtCOP(d.interes)}</span></div>
-            <div className="res-row"><span>Tecnología</span><span>+{fmtCOP(d.tecnologia)}</span></div>
-            {!conCodeudores && <div className="res-row"><span>Administración</span><span>+{fmtCOP(d.admin)}</span></div>}
-            {!conCodeudores && <div className="res-row"><span>Seguro</span><span>+{fmtCOP(d.seguro)}</span></div>}
             <div className="res-row total"><span>Total a pagar</span><span>{fmtCOP(d.total)}</span></div>
             <div className="res-row"><span>Plazo</span><span>{d.dias} días</span></div>
+            <div className="res-row"><span>Tasa E.A.</span><span>{(d.ea * 100).toLocaleString('es-CO', { maximumFractionDigits: 1 })}%</span></div>
           </div>
           <label className="codeu">
             <input type="checkbox" checked={conCodeudores} onChange={e => setConCodeudores(e.target.checked)} />
-            <span>Tengo <strong>2 codeudores</strong> con documentos y contrato firmado — <em>sin administración ni seguro</em></span>
+            <span>Tengo <strong>2 codeudores</strong> con documentos y contrato firmado — <em>mejor tasa</em></span>
           </label>
           {conCodeudores && <div className="codeu-note">📎 Un asesor validará los documentos de tus 2 codeudores antes de aprobar.</div>}
-          {nv.pr && <div className="prr-note">💡 Hasta 2 prórrogas de +3 días disponibles</div>}
+          {nv.pr && <div className="prr-note">💡 Hasta 2 prórrogas de +15 días disponibles</div>}
           <button className="btna" onClick={() => nav('sol')}>SOLICITAR AHORA ›</button>
         </div>
 
