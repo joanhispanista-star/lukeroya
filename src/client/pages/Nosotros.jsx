@@ -8,7 +8,7 @@ export default function Nosotros() {
       <div className="pw">
         <div className="mhero"><div className="mhico">🤖</div><div className="mhtit">Inclusión financiera para todos</div><div className="mhtx">En Lukero creemos que el acceso al crédito no debería depender de cuánto tiempo llevas en el sistema bancario.</div></div>
         <div className="sgrid">
-          {[['100%','Digital · sin filas'],['30','días de plazo base'],['20','niveles de fidelidad'],['$10M','máximo disponible']].map(([n,l]) => (
+          {[['100%','Digital · sin filas'],['3–6','meses · a cuotas'],['20','niveles de fidelidad'],['$10M','máximo disponible']].map(([n,l]) => (
             <div key={l} className="sbox"><div className="sbn">{n}</div><div className="sbl">{l}</div></div>
           ))}
         </div>

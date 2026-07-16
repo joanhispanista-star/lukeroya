@@ -1,4 +1,4 @@
-import { NV, PTS_NIVEL, TECHO_EA, PLAZO_DIAS, PRORROGA_DIAS } from './constants'
+import { NV, PTS_NIVEL, TECHO_EA, PLAZO_MESES } from './constants'
 
 export const fmt = n => Number(n).toLocaleString('es-CO')
 export const fmtCOP = n => '$' + fmt(n)
@@ -39,6 +39,11 @@ export function costoDeEA(ea, dias) {
   return Math.pow(1 + ea, dias / 365) - 1
 }
 
+// Tasa mensual efectiva equivalente a una Tasa Efectiva Anual.
+export function tasaMensual(ea) {
+  return Math.pow(1 + ea, 1 / 12) - 1
+}
+
 // Tasa Efectiva Anual aplicable a un nivel. Con 2 codeudores (garantía) baja.
 // TOPE DE SEGURIDAD: nunca devuelve una tasa por encima del techo de usura,
 // aunque un nivel esté mal configurado o el techo baje.
@@ -49,21 +54,24 @@ export function eaNivel(nivel, conCodeudores = false) {
   return Math.min(ea, TECHO_EA)
 }
 
-// Costo del crédito: un ÚNICO interés transparente, sin cargos fragmentados,
-// calculado por la Tasa Efectiva Anual del nivel. Siempre bajo el techo de usura.
-export function calcDesglose(capital, nivel, { conCodeudores = false, prorroga = 0, dias = PLAZO_DIAS } = {}) {
-  const totalDias = dias + prorroga * PRORROGA_DIAS
+// Crédito a CUOTAS mensuales (amortización). La Tasa Efectiva Anual del plan es
+// EXACTAMENTE eaNivel() → siempre bajo el techo de usura. `meses` >= 3 hace que el
+// plazo supere los 60 días (apto para Play Store). Un solo interés, sin cargos ocultos.
+export function calcDesglose(capital, nivel, { conCodeudores = false, meses = PLAZO_MESES } = {}) {
+  const n = Math.max(3, Math.round(meses))
   const ea = eaNivel(nivel, conCodeudores)
-  const interes = Math.round(capital * costoDeEA(ea, totalDias))
-  const total = capital + interes
+  const im = tasaMensual(ea)
+  const cuota = Math.round(capital * im / (1 - Math.pow(1 + im, -n)))
+  const total = cuota * n
+  const interes = total - capital
 
   const fechaVence = new Date()
-  fechaVence.setDate(fechaVence.getDate() + totalDias)
+  fechaVence.setMonth(fechaVence.getMonth() + n)
 
-  return { capital, interes, cobro: interes, total, dias: totalDias, ea, fechaVence, conCodeudores }
+  return { capital, interes, cuota, meses: n, nCuotas: n, total, ea, dias: n * 30, fechaVence, conCodeudores }
 }
 
 // Alias retro-compatible.
-export function calcCredito(capital, nivel, prorroga = 0) {
-  return calcDesglose(capital, nivel, { prorroga })
+export function calcCredito(capital, nivel, meses = PLAZO_MESES) {
+  return calcDesglose(capital, nivel, { meses })
 }

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import useClientStore from '../store'
-import { NV } from '../../shared/constants'
+import { NV, MESES_OPCIONES } from '../../shared/constants'
 import { fmtCOP, capsDisp, calcDesglose } from '../../shared/utils'
 import './Solicitar.css'
 
@@ -15,7 +15,8 @@ export default function Solicitar() {
   const caps = capsDisp(nv, user.puntos || 0)
   const [selCap, setSelCap] = useState(caps[0]?.m || nv.caps[0].m)
   const [conCodeudores, setConCodeudores] = useState(false)
-  const calc = calcDesglose(selCap, user.nivel, { conCodeudores })
+  const [selMeses, setSelMeses] = useState(MESES_OPCIONES[0])
+  const calc = calcDesglose(selCap, user.nivel, { conCodeudores, meses: selMeses })
 
   async function handleSolicitar() {
     setLoading(true)
@@ -65,13 +66,20 @@ export default function Solicitar() {
               <button key={c.m} className={`capbtn${selCap===c.m?' active':''}`} onClick={() => setSelCap(c.m)}>{fmtCOP(c.m)}</button>
             ))}
           </div>
+          <div className="slbl">Plazo</div>
+          <div className="capg">
+            {MESES_OPCIONES.map(m => (
+              <button key={m} className={`capbtn${selMeses===m?' active':''}`} onClick={() => setSelMeses(m)}>{m} meses</button>
+            ))}
+          </div>
           <div className="res-box">
             <div className="res-row"><span>Capital</span><span>{fmtCOP(selCap)}</span></div>
-            <div className="res-row"><span>Interés</span><span>+{fmtCOP(calc.interes)}</span></div>
-            <div className="res-row total"><span>Total a pagar</span><span>{fmtCOP(calc.total)}</span></div>
-            <div className="res-row"><span>Plazo</span><span>{calc.dias} días</span></div>
+            <div className="res-row total"><span>Cuota mensual</span><span>{fmtCOP(calc.cuota)}</span></div>
+            <div className="res-row"><span>Nº de cuotas</span><span>{calc.nCuotas} meses</span></div>
+            <div className="res-row"><span>Total a pagar</span><span>{fmtCOP(calc.total)}</span></div>
+            <div className="res-row"><span>Interés total</span><span>+{fmtCOP(calc.interes)}</span></div>
             <div className="res-row"><span>Tasa E.A.</span><span>{(calc.ea * 100).toLocaleString('es-CO', { maximumFractionDigits: 1 })}%</span></div>
-            <div className="res-row"><span>Vence</span><span>{calc.fechaVence.toLocaleDateString('es-CO')}</span></div>
+            <div className="res-row"><span>Última cuota</span><span>{calc.fechaVence.toLocaleDateString('es-CO')}</span></div>
           </div>
           <label className="codeu">
             <input type="checkbox" checked={conCodeudores} onChange={e => setConCodeudores(e.target.checked)} />

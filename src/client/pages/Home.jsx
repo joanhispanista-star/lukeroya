@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import useClientStore from '../store'
-import { NV } from '../../shared/constants'
+import { NV, MESES_OPCIONES } from '../../shared/constants'
 import { fmtCOP, capsDisp, calcDesglose } from '../../shared/utils'
 import './Home.css'
 
@@ -10,11 +10,12 @@ export default function Home() {
   const [selNiv, setSelNiv] = useState(user?.nivel || 1)
   const [selCap, setSelCap] = useState(NV[(user?.nivel||1)-1].caps[0].m)
   const [conCodeudores, setConCodeudores] = useState(false)
+  const [selMeses, setSelMeses] = useState(MESES_OPCIONES[0])
 
   const nv = NV[selNiv - 1]
   const puntos = user?.puntos || 0
   const caps = capsDisp(nv, puntos)
-  const d = calcDesglose(selCap, selNiv, { conCodeudores })
+  const d = calcDesglose(selCap, selNiv, { conCodeudores, meses: selMeses })
 
   return (
     <div className="screen-inner">
@@ -61,11 +62,19 @@ export default function Home() {
                 onClick={() => setSelCap(c.m)}>{fmtCOP(c.m)}</button>
             ))}
           </div>
+          <div className="slbl" style={{ marginTop:9 }}>Plazo</div>
+          <div className="capg">
+            {MESES_OPCIONES.map(m => (
+              <button key={m} className={`capbtn${selMeses === m ? ' active' : ''}`}
+                onClick={() => setSelMeses(m)}>{m} meses</button>
+            ))}
+          </div>
           <div className="res-box">
             <div className="res-row"><span>Capital</span><span>{fmtCOP(selCap)}</span></div>
-            <div className="res-row"><span>Interés</span><span>+{fmtCOP(d.interes)}</span></div>
-            <div className="res-row total"><span>Total a pagar</span><span>{fmtCOP(d.total)}</span></div>
-            <div className="res-row"><span>Plazo</span><span>{d.dias} días</span></div>
+            <div className="res-row total"><span>Cuota mensual</span><span>{fmtCOP(d.cuota)}</span></div>
+            <div className="res-row"><span>Nº de cuotas</span><span>{d.nCuotas} meses</span></div>
+            <div className="res-row"><span>Total a pagar</span><span>{fmtCOP(d.total)}</span></div>
+            <div className="res-row"><span>Interés total</span><span>+{fmtCOP(d.interes)}</span></div>
             <div className="res-row"><span>Tasa E.A.</span><span>{(d.ea * 100).toLocaleString('es-CO', { maximumFractionDigits: 1 })}%</span></div>
           </div>
           <label className="codeu">
@@ -73,7 +82,7 @@ export default function Home() {
             <span>Tengo <strong>2 codeudores</strong> con documentos y contrato firmado — <em>mejor tasa</em></span>
           </label>
           {conCodeudores && <div className="codeu-note">📎 Un asesor validará los documentos de tus 2 codeudores antes de aprobar.</div>}
-          {nv.pr && <div className="prr-note">💡 Hasta 2 prórrogas de +15 días disponibles</div>}
+          <div className="prr-note">💡 Pagas en {selMeses} cuotas mensuales iguales.</div>
           <button className="btna" onClick={() => nav('sol')}>SOLICITAR AHORA ›</button>
         </div>
 
