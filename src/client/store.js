@@ -44,6 +44,7 @@ const useClientStore = create((set, get) => ({
           nombre: pendingUser.nombre,
           email: pendingUser.email || '',
           telefono: pendingUser.tel || '',
+          ciudad: pendingUser.ciudad || '',
           codigo: pendingUser.codigo || '',
           tycVersion: TYC_VERSION,
         },
@@ -110,6 +111,17 @@ const useClientStore = create((set, get) => ({
     }
     saveUser(updated)
     showToast(`+${pts} puntos ganados! 🎉`)
+  },
+
+  misSolicitudes: [],
+
+  async fetchMisSolicitudes() {
+    const ced = get().user?.cedula
+    if (!ced) return
+    try {
+      const data = await api(`/solicitudes/user/${ced}`)
+      if (Array.isArray(data)) set({ misSolicitudes: data })
+    } catch (e) { console.error('fetchMisSolicitudes:', e) }
   },
 
   async submitSolicitud(sol) {

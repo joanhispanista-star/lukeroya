@@ -32,9 +32,9 @@ export default function Niveles() {
         <div className="fasttip">
           <div className="ftt">🚀 ¿Cómo subir de nivel más rápido?</div>
           {[
-            ['🟢','Paga 3 días antes:','puntos dobles + póliza e interés GRATIS.'],
-            ['🟡','Paga el día de pago','antes de las 12pm: 40% descuento.'],
-            ['📋','Mínimo 3 créditos','por nivel para avanzar.'],
+            ['🟢','Paga anticipado:','puntos dobles y pagas MENOS interés (se recalcula por los días usados).'],
+            ['🟡','Paga tus cuotas puntual:','cada cuota a tiempo suma puntos.'],
+            ['📋','Completa créditos:','cada nivel pide varios créditos pagados (de 3 a 8 según el nivel).'],
             ['📲','Síguenos en redes','y gana puntos extra.'],
             ['👥','Refiere amigos:','+200 puntos por cada uno.'],
           ].map(([ico,bold,rest]) => (

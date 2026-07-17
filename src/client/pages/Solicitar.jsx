@@ -97,7 +97,7 @@ export default function Solicitar() {
         <button className="btna" onClick={handleSolicitar} disabled={loading}>
           {loading ? 'Enviando...' : 'CONFIRMAR SOLICITUD ›'}
         </button>
-        <div style={{ fontSize:11,color:'var(--text3)',textAlign:'center',marginTop:8 }}>Un asesor revisará y desembolsará en minutos</div>
+        <div style={{ fontSize:11,color:'var(--text3)',textAlign:'center',marginTop:8 }}>Un asesor revisará tu solicitud y te contactará por WhatsApp</div>
       </div>
     </div>
   )

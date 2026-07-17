@@ -6,7 +6,7 @@ const REDES = [
   { key:'ig', ico:'📸', nom:'Instagram', handle:'@lukero.co · próximamente', pts:150, btn:'Seguir' },
   { key:'fb', ico:'📘', nom:'Facebook',  handle:'@lukero.co · próximamente', pts:100, btn:'Me gusta' },
   { key:'tt', ico:'🎵', nom:'TikTok',    handle:'@lukero.co · próximamente', pts:150, btn:'Seguir' },
-  { key:'yt', ico:'▶️', nom:'YouTube',   handle:'Lukero Nanocreditos · próximamente', pts:100, btn:'Suscribirse' },
+  { key:'yt', ico:'▶️', nom:'YouTube',   handle:'Lukero · próximamente', pts:100, btn:'Suscribirse' },
 ]
 
 export default function Red() {

@@ -23,7 +23,7 @@ export default function KYC({ pendingUser, onBack }) {
     const data = await validarCodigo(c, pendingUser.cedula)
     setChecking(false)
     if (data.error) { flashErr(data.error); return }
-    setStep(3)
+    setStep(2)
   }
 
   async function handleFinish() {
@@ -35,21 +35,13 @@ export default function KYC({ pendingUser, onBack }) {
 
   const steps = [
     <div key={0} className="kstep">
-      <div className="kstep-title">Foto de tu cédula</div>
-      <div className="kstep-sub">Parte frontal con nombre y número visibles.</div>
-      <div className="ubx"><div className="uico">🪪</div><div><div className="uptit">Cédula (frente)</div><div className="upsub">JPG o PNG</div></div></div>
-      <button className="btn" style={{ marginTop: 12 }} onClick={() => setStep(1)}>Continuar →</button>
+      <div className="kstep-title">Validación de identidad</div>
+      <div className="kstep-sub">Para protegerte, verificamos que cada cliente es quien dice ser.</div>
+      <div className="ubx"><div className="uico">🪪</div><div><div className="uptit">Ten tu cédula a la mano</div><div className="upsub">Un asesor te pedirá por WhatsApp una foto de tu cédula y una selfie antes de aprobar tu crédito.</div></div></div>
+      <button className="btn" style={{ marginTop: 12 }} onClick={() => setStep(1)}>Entendido, continuar →</button>
     </div>,
 
     <div key={1} className="kstep">
-      <div className="kstep-title">Selfie con cédula</div>
-      <div className="kstep-sub">Foto con cara + cédula visibles.</div>
-      <div className="ubx"><div className="uico">🤳</div><div><div className="uptit">Selfie con cédula</div><div className="upsub">Cara + cédula en una foto</div></div></div>
-      <button className="btn" style={{ marginTop: 12 }} onClick={() => setStep(2)}>Continuar →</button>
-      <button className="btn-ghost" onClick={() => setStep(0)}>← Atrás</button>
-    </div>,
-
-    <div key={2} className="kstep">
       <div className="kstep-title">Código de acceso</div>
       <div className="kstep-sub">Ingresa el código que <strong style={{ color:'var(--gold)' }}>Lukero te entregó</strong> para activar tu cuenta.</div>
       <div className="field"><label>Código</label>
@@ -64,10 +56,10 @@ export default function KYC({ pendingUser, onBack }) {
       <button className="btn" disabled={checking} onClick={checkCodigo}>{checking ? 'Validando…' : 'Validar y continuar →'}</button>
       {err && <div className="err">{err}</div>}
       <div className="auth-foot" style={{ marginTop: 10 }}>¿No tienes código? Escríbenos por WhatsApp y te lo damos.</div>
-      <button className="btn-ghost" onClick={() => setStep(1)}>← Atrás</button>
+      <button className="btn-ghost" onClick={() => setStep(0)}>← Atrás</button>
     </div>,
 
-    <div key={3} className="kstep">
+    <div key={2} className="kstep">
       <div className="kstep-title">Términos y condiciones</div>
       <div className="tcscr" dangerouslySetInnerHTML={{ __html: TYC_HTML }} />
       <label className="tcck"><input type="checkbox" checked={tc1} onChange={e => setTc1(e.target.checked)} /><span>He leído y acepto los <strong>Términos y Condiciones</strong></span></label>
@@ -79,7 +71,7 @@ export default function KYC({ pendingUser, onBack }) {
         onClick={handleFinish}>
         {loading ? 'Registrando...' : 'COMPLETAR REGISTRO'}
       </button>
-      <button className="btn-ghost" onClick={() => setStep(2)}>← Atrás</button>
+      <button className="btn-ghost" onClick={() => setStep(1)}>← Atrás</button>
     </div>,
   ]
 
@@ -90,7 +82,7 @@ export default function KYC({ pendingUser, onBack }) {
       <div className="auth-tag">Verificación de identidad</div>
       <div className="auth-card" style={{ maxWidth:370 }}>
         <div className="kprog">
-          {[0,1,2,3].map(i => (
+          {[0,1,2].map(i => (
             <div key={i} className={`kd${i === step ? ' cur' : i < step ? ' done' : ''}`} />
           ))}
         </div>

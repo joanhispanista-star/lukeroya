@@ -49,7 +49,8 @@ async function initDB() {
       historial   JSONB DEFAULT '[]',
       created_at  TIMESTAMPTZ DEFAULT NOW(),
       consent_fecha   TIMESTAMPTZ,
-      consent_version TEXT
+      consent_version TEXT,
+      ciudad      TEXT DEFAULT ''
     );
     CREATE TABLE IF NOT EXISTS solicitudes (
       id          TEXT PRIMARY KEY,
@@ -64,7 +65,8 @@ async function initDB() {
       estado      TEXT DEFAULT 'pendiente',
       capital     INTEGER,
       prorrogas   INTEGER DEFAULT 0,
-      nivel       INTEGER
+      nivel       INTEGER,
+      codeudores  BOOLEAN DEFAULT FALSE
     );
     CREATE TABLE IF NOT EXISTS comentarios (
       id          TEXT PRIMARY KEY,
@@ -88,9 +90,14 @@ async function initDB() {
     );
   `)
 
-  // Migración: columnas de consentimiento (Habeas Data) para bases ya existentes.
-  for (const col of ['consent_fecha TIMESTAMPTZ', 'consent_version TEXT']) {
-    try { await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS ${col}`) } catch (e) { /* pg-mem o ya existe */ }
+  // Migraciones para bases ya existentes (consentimiento, ciudad, codeudores).
+  for (const [tabla, col] of [
+    ['users', 'consent_fecha TIMESTAMPTZ'],
+    ['users', 'consent_version TEXT'],
+    ['users', "ciudad TEXT DEFAULT ''"],
+    ['solicitudes', 'codeudores BOOLEAN DEFAULT FALSE'],
+  ]) {
+    try { await pool.query(`ALTER TABLE ${tabla} ADD COLUMN IF NOT EXISTS ${col}`) } catch (e) { /* pg-mem o ya existe */ }
   }
 
   const demo = await pool.query('SELECT cedula FROM users WHERE cedula = $1', ['1234567890'])
@@ -154,11 +161,12 @@ app.post('/api/auth/register', async (req, res) => {
 
     const hash = await bcrypt.hash(password, 10)
     const tyc = (req.body.tycVersion || '').toString().slice(0, 20) || null
+    const ciudad = (req.body.ciudad || '').toString().slice(0, 60)
     try {
       const r = await pool.query(
-        `INSERT INTO users (cedula, password, nombre, email, telefono, consent_fecha, consent_version)
-         VALUES ($1,$2,$3,$4,$5, NOW(), $6) RETURNING *`,
-        [cedula, hash, nombre, email || '', telefono || '', tyc]
+        `INSERT INTO users (cedula, password, nombre, email, telefono, ciudad, consent_fecha, consent_version)
+         VALUES ($1,$2,$3,$4,$5,$6, NOW(), $7) RETURNING *`,
+        [cedula, hash, nombre, email || '', telefono || '', ciudad, tyc]
       )
       res.json(toUser(r.rows[0]))
     } catch (e) {
@@ -320,12 +328,12 @@ app.get('/api/users', async (req, res) => {
 
 // ── SOLICITUDES ───────────────────────────────────────────────
 app.post('/api/solicitudes', async (req, res) => {
-  const { id, cedula, nombre, monto, plazo, tasa, totalPagar, fechaVence, capital, nivel } = req.body
+  const { id, cedula, nombre, monto, plazo, tasa, totalPagar, fechaVence, capital, nivel, codeudores } = req.body
   try {
     const r = await pool.query(
-      `INSERT INTO solicitudes (id, cedula, nombre, monto, plazo, tasa, total_pagar, fecha_vence, capital, nivel)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
-      [id, cedula, nombre, monto, plazo, tasa, totalPagar, fechaVence, capital, nivel]
+      `INSERT INTO solicitudes (id, cedula, nombre, monto, plazo, tasa, total_pagar, fecha_vence, capital, nivel, codeudores)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
+      [id, cedula, nombre, monto, plazo, tasa, totalPagar, fechaVence, capital, nivel, codeudores === true]
     )
     res.json(toSol(r.rows[0]))
   } catch (e) { res.status(500).json({ error: e.message }) }
@@ -346,12 +354,11 @@ app.get('/api/solicitudes/user/:cedula', async (req, res) => {
 })
 
 app.patch('/api/solicitudes/:id', async (req, res) => {
-  const { estado, prorrogas } = req.body
+  const { estado } = req.body
   try {
     const sets = []
     const vals = [req.params.id]
-    if (estado !== undefined)    { vals.push(estado);    sets.push(`estado=$${vals.length}`) }
-    if (prorrogas !== undefined) { vals.push(prorrogas); sets.push(`prorrogas=$${vals.length}`) }
+    if (estado !== undefined) { vals.push(estado); sets.push(`estado=$${vals.length}`) }
     if (!sets.length) return res.status(400).json({ error: 'Nada que actualizar' })
     const r = await pool.query(`UPDATE solicitudes SET ${sets.join(',')} WHERE id=$1 RETURNING *`, vals)
     const sol = r.rows[0]
@@ -441,6 +448,8 @@ function toUser(r) {
     telefono: r.telefono, nivel: r.nivel, puntos: r.puntos,
     creds: r.creds, kyc: r.kyc, social: r.social,
     creditoActivo: r.credito_activo, historial: r.historial,
+    ciudad: r.ciudad || '',
+    fechaReg: r.created_at ? new Date(r.created_at).toLocaleDateString('es-CO') : '',
   }
 }
 
@@ -450,7 +459,7 @@ function toSol(r) {
     monto: r.monto, plazo: r.plazo, tasa: r.tasa,
     totalPagar: r.total_pagar, fechaSol: r.fecha_sol,
     fechaVence: r.fecha_vence, estado: r.estado,
-    capital: r.capital, prorrogas: r.prorrogas, nivel: r.nivel,
+    capital: r.capital, nivel: r.nivel, codeudores: !!r.codeudores,
   }
 }
 

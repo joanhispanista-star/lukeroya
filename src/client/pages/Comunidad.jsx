@@ -28,18 +28,13 @@ function ComCard({ c, destacado }) {
 }
 
 export default function Comunidad() {
-  const { user, comentarios, fetchComentarios, submitComentario, claimSocial, showToast } = useClientStore()
+  const { user, comentarios, fetchComentarios, submitComentario, showToast } = useClientStore()
   const [estrellas, setEstrellas] = useState(5)
   const [texto, setTexto] = useState('')
   const [red, setRed] = useState('')
   const [enviando, setEnviando] = useState(false)
 
   useEffect(() => { fetchComentarios() }, [])
-
-  const seguir = (r) => {
-    window.open(r.url, '_blank', 'noopener')
-    claimSocial(r.key, r.pts)
-  }
 
   async function enviar() {
     if (!texto.trim()) { showToast('Escribe tu experiencia'); return }
@@ -61,20 +56,20 @@ export default function Comunidad() {
     <div className="screen-inner">
       <nav className="topnav"><div className="nav-logo">Comunidad</div></nav>
       <div className="pw">
-        {/* Redes sociales */}
+        {/* Redes sociales — aún no publicadas; se activan (con puntos) cuando existan. */}
         <div className="card">
-          <div className="ctitle">📲 Síguenos y gana puntos</div>
+          <div className="ctitle">📲 Nuestras redes</div>
           <div className="com-redes">
-            {REDES.map(r => {
-              const seguido = !!user?.social?.[r.key]
-              return (
-                <button key={r.key} className={`com-red${seguido ? ' done' : ''}`} onClick={() => seguir(r)}>
-                  <span className="com-red-ico">{r.icon}</span>
-                  <span className="com-red-lbl">{r.label}</span>
-                  <span className="com-red-pts">{seguido ? '✓ Seguido' : `+${r.pts} pts`}</span>
-                </button>
-              )
-            })}
+            {REDES.map(r => (
+              <button key={r.key} className="com-red" disabled style={{ opacity:.6, cursor:'default' }}>
+                <span className="com-red-ico">{r.icon}</span>
+                <span className="com-red-lbl">{r.label}</span>
+                <span className="com-red-pts">Próximamente</span>
+              </button>
+            ))}
+          </div>
+          <div style={{ fontSize:11.5, color:'var(--text3)', marginTop:8, textAlign:'center' }}>
+            Cuando publiquemos nuestras redes, seguirlas te dará puntos. 🎁
           </div>
         </div>
 
@@ -93,7 +88,7 @@ export default function Comunidad() {
           <button className="btna" onClick={enviar} disabled={enviando}>
             {enviando ? 'Enviando...' : 'PUBLICAR OPINIÓN'}
           </button>
-          <div className="com-hint">Al seguirnos y comentar validamos tu cuenta y mejoras tus condiciones. 💛</div>
+          <div className="com-hint">Tu opinión ayuda a otros vecinos a confiar en Lukero. 💛</div>
         </div>
 
         {/* Testimonios destacados */}

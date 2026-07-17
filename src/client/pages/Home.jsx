@@ -54,7 +54,6 @@ export default function Home() {
               >N{n.n}</button>
             ))}
           </div>
-          {nv.grace && <div className="grace">🎁 ¡1 día de gracia gratis para nuevos!</div>}
           <div className="slbl" style={{ marginTop:9 }}>Monto</div>
           <div className="capg">
             {caps.map(c => (
@@ -88,7 +87,7 @@ export default function Home() {
 
         {/* Pasos */}
         <div className="steps-grid">
-          {[['📱','Solicita','Llena el formulario'],['⚡','Aprobamos','En minutos'],['💰','Recibe','Nequi o cuenta']].map(([ico,tit,sub]) => (
+          {[['📱','Solicita','Llena el formulario'],['🧑‍💼','Te revisamos','Un asesor evalúa tu solicitud'],['💰','Recibe','Por Bre-B o Nequi']].map(([ico,tit,sub]) => (
             <div key={tit} className="card step-card">
               <div style={{ fontSize:20, marginBottom:3 }}>{ico}</div>
               <div style={{ fontSize:11, fontWeight:600, marginBottom:1 }}>{tit}</div>
@@ -101,7 +100,7 @@ export default function Home() {
           <div className="mst">¿Por qué Lukero?</div>
           <div className="msx">El 60% de los colombianos no accede a crédito bancario. Lukero nació para cambiar eso — sin papeleo, sin filas, sin historial previo requerido.</div>
           <div className="mpil">
-            {[['⚡','Aprobación en minutos'],['📈','Mejoras con cada pago'],['🔒','Costos 100% transparentes']].map(([i,t]) => (
+            {[['⚡','Respuesta rápida de un asesor'],['📈','Mejoras con cada pago'],['🔒','Costos 100% transparentes']].map(([i,t]) => (
               <div key={t} className="mp"><div className="mi">{i}</div><div className="mt">{t}</div></div>
             ))}
           </div>

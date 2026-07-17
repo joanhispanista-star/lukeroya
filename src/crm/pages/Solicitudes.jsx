@@ -41,12 +41,17 @@ export default function Solicitudes() {
           <div style={{ padding:28, textAlign:'center', color:'var(--text3)' }}>Sin resultados</div>
         ) : (
           <table className="crm-table">
-            <thead><tr><th>Nombre</th><th>Cédula</th><th>Capital</th><th>Total</th><th>Vence</th><th>Estado</th><th>Acción</th></tr></thead>
+            <thead><tr><th>Nombre</th><th>Cédula</th><th>Capital</th><th>Cuota</th><th>E.A.</th><th>Total</th><th>Vence</th><th>Estado</th><th>Acción</th></tr></thead>
             <tbody>
-              {filtered.map(s => (
+              {filtered.map(s => {
+                const nCuotas = s.plazo >= 90 ? Math.round(s.plazo / 30) : 0
+                const cuota = nCuotas ? Math.round((s.totalPagar || 0) / nCuotas) : 0
+                return (
                 <tr key={s.id}>
-                  <td>{s.nombre}</td><td>{s.cedula}</td>
+                  <td>{s.nombre}{s.codeudores && <span title="Aporta 2 codeudores" style={{ marginLeft:6 }}>👥</span>}</td><td>{s.cedula}</td>
                   <td>{fmtCOP(s.capital || 0)}</td>
+                  <td>{nCuotas ? `${fmtCOP(cuota)} × ${nCuotas}` : '—'}</td>
+                  <td>{s.tasa ? `${Math.round(s.tasa * 1000) / 10}%` : '—'}</td>
                   <td>{fmtCOP(s.totalPagar || 0)}</td>
                   <td>{s.fechaVence || '-'}</td>
                   <td><span className={`est-chip ${s.estado}`}>{s.estado}</span></td>
@@ -60,7 +65,7 @@ export default function Solicitudes() {
                     </select>
                   </td>
                 </tr>
-              ))}
+              )})}
             </tbody>
           </table>
         )}

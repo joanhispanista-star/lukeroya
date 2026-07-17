@@ -5,7 +5,6 @@ const ITEMS = [
   { key:'comunidad', icon:'⭐', label:'Comunidad'          },
   { key:'hist',   icon:'📋', label:'Historial'          },
   { key:'finn',   icon:'🧠', label:'Asesor Financiero'  },
-  { key:'red',    icon:'🎁', label:'Gana Puntos'        },
   { key:'nos',    icon:'🏢', label:'Quiénes somos'      },
   { key:'tyc',    icon:'📄', label:'T&C'                },
   { key:'perfil', icon:'👤', label:'Mi Perfil'          },

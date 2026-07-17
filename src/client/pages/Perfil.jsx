@@ -19,7 +19,7 @@ export default function Perfil() {
           <div className="perf-badge">N{user.nivel} · {nv.nom}</div>
         </div>
         <div className="card">
-          {[['Cédula',user.cedula],['Teléfono',user.tel],['Email',user.email||'-'],['Registro',user.fechaReg],['Créditos completados',user.creds||0],['Puntos totales',user.puntos||0]].map(([k,v]) => (
+          {[['Cédula',user.cedula],['Teléfono',user.telefono || user.tel || '-'],['Email',user.email||'-'],['Registro',user.fechaReg || '-'],['Créditos completados',user.creds||0],['Puntos totales',user.puntos||0]].map(([k,v]) => (
             <div key={k} className="perf-row"><span className="perf-k">{k}</span><span className="perf-v">{v}</span></div>
           ))}
         </div>
