@@ -16,6 +16,7 @@ import BottomNav from './components/BottomNav'
 import MoreSheet from './components/MoreSheet'
 import Toast from './components/Toast'
 import Mascota from './components/Mascota'
+import InstalarBanner from './components/InstalarBanner'
 import './client.css'
 
 const SCREENS = {
@@ -32,6 +33,7 @@ export default function ClientApp() {
 
   if (!user) return (
     <div className="theme-client client-shell">
+      <InstalarBanner />
       <Auth />
     </div>
   )
@@ -41,6 +43,7 @@ export default function ClientApp() {
 
   return (
     <div className="theme-client client-shell">
+      <InstalarBanner />
       {isChat
         ? <Screen />
         : <div className="client-scroll"><Screen /></div>
